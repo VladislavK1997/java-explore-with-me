@@ -14,24 +14,23 @@ services:
       - ewm-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stats_user -d stats_db"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 30
 
   stats-server:
     build:
       context: ./stats-service/stats-server
       dockerfile: Dockerfile
-      args:
-        - JAR_FILE=target/stats-server-0.0.1-SNAPSHOT.jar
     container_name: stats-server
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats_db
       SPRING_DATASOURCE_USERNAME: stats_user
       SPRING_DATASOURCE_PASSWORD: stats_password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create
       SERVER_PORT: 9090
       SPRING_PROFILES_ACTIVE: prod
+      JAVA_OPTS: "-Xmx512m -XX:+UseContainerSupport -Dspring.profiles.active=prod"
     ports:
       - "9090:9090"
     depends_on:
@@ -41,9 +40,10 @@ services:
       - ewm-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
 
 networks:
   ewm-network:
