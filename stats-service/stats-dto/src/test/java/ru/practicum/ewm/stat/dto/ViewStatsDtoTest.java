@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ViewStatsDtoTest {
+public class ViewStatsDtoTest {
 
     @Test
-    void shouldCreateValidViewStatsDto() {
+    public void shouldCreateValidViewStatsDto() {
         ViewStatsDto dto = new ViewStatsDto(
                 "ewm-main-service",
                 "/events/1",
@@ -20,13 +20,13 @@ class ViewStatsDtoTest {
     }
 
     @Test
-    void shouldHaveDefaultConstructor() {
+    public void shouldHaveDefaultConstructor() {
         ViewStatsDto dto = new ViewStatsDto();
         assertNotNull(dto);
     }
 
     @Test
-    void shouldHaveCorrectGettersAndSetters() {
+    public void shouldHaveCorrectGettersAndSetters() {
         ViewStatsDto dto = new ViewStatsDto();
 
         dto.setApp("test-app");
@@ -39,7 +39,7 @@ class ViewStatsDtoTest {
     }
 
     @Test
-    void shouldBeEqualWithSameValues() {
+    public void shouldBeEqualWithSameValues() {
         ViewStatsDto dto1 = new ViewStatsDto("app", "/uri", 10L);
         ViewStatsDto dto2 = new ViewStatsDto("app", "/uri", 10L);
 

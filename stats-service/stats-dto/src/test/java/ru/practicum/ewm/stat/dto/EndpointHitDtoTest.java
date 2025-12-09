@@ -15,12 +15,12 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class EndpointHitDtoTest {
+public class EndpointHitDtoTest {
     private Validator validator;
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
 
@@ -29,7 +29,7 @@ class EndpointHitDtoTest {
     }
 
     @Test
-    void shouldCreateValidEndpointHitDto() {
+    public void shouldCreateValidEndpointHitDto() {
         EndpointHitDto dto = new EndpointHitDto(
                 1L,
                 "ewm-main-service",
@@ -43,7 +43,7 @@ class EndpointHitDtoTest {
     }
 
     @Test
-    void shouldFailValidationWhenAppIsBlank() {
+    public void shouldFailValidationWhenAppIsBlank() {
         EndpointHitDto dto = new EndpointHitDto(
                 1L,
                 "",
@@ -59,7 +59,7 @@ class EndpointHitDtoTest {
     }
 
     @Test
-    void shouldFailValidationWhenUriIsBlank() {
+    public void shouldFailValidationWhenUriIsBlank() {
         EndpointHitDto dto = new EndpointHitDto(
                 1L,
                 "ewm-main-service",
@@ -75,7 +75,7 @@ class EndpointHitDtoTest {
     }
 
     @Test
-    void shouldFailValidationWhenIpIsBlank() {
+    public void shouldFailValidationWhenIpIsBlank() {
         EndpointHitDto dto = new EndpointHitDto(
                 1L,
                 "ewm-main-service",
@@ -91,7 +91,7 @@ class EndpointHitDtoTest {
     }
 
     @Test
-    void shouldFailValidationWhenTimestampIsNull() {
+    public void shouldFailValidationWhenTimestampIsNull() {
         EndpointHitDto dto = new EndpointHitDto(
                 1L,
                 "ewm-main-service",
@@ -107,7 +107,7 @@ class EndpointHitDtoTest {
     }
 
     @Test
-    void shouldSerializeAndDeserializeJson() throws Exception {
+    public void shouldSerializeAndDeserializeJson() throws Exception {
         LocalDateTime timestamp = LocalDateTime.of(2024, 1, 15, 10, 30, 0);
         EndpointHitDto original = new EndpointHitDto(
                 1L,
@@ -129,7 +129,7 @@ class EndpointHitDtoTest {
     }
 
     @Test
-    void shouldHaveCorrectGettersAndSetters() {
+    public void shouldHaveCorrectGettersAndSetters() {
         EndpointHitDto dto = new EndpointHitDto();
 
         dto.setId(1L);
