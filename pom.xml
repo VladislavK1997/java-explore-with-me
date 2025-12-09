@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.2</version> <!-- Обновляем для JDK 21 -->
+        <version>3.3.2</version>
         <relativePath/>
     </parent>
 
@@ -17,12 +17,14 @@
     <packaging>pom</packaging>
 
     <properties>
-        <java.version>21</java.version> <!-- Меняем на 21 -->
+        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
-        <lombok.version>1.18.32</lombok.version> <!-- Обновляем Lombok для JDK 21 -->
+        <lombok.version>1.18.32</lombok.version>
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+        <checkstyle.plugin.version>3.3.0</checkstyle.plugin.version>
+        <checkstyle.version>10.16.0</checkstyle.version>
     </properties>
 
     <modules>
@@ -67,7 +69,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>${checkstyle.plugin.version}</version>
                     <configuration>
                         <configLocation>checkstyle.xml</configLocation>
                         <failOnViolation>true</failOnViolation>
@@ -86,7 +88,7 @@
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>10.16.0</version>
+                            <version>${checkstyle.version}</version>
                         </dependency>
                     </dependencies>
                 </plugin>
