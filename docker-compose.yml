@@ -10,7 +10,6 @@ services:
       - "5433:5432"
     volumes:
       - stats-db-data:/var/lib/postgresql/data
-      - ./stats-service/stats-server/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     networks:
       - ewm-network
     healthcheck:
