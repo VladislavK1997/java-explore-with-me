@@ -1,14 +1,60 @@
+version: '3.8'
+
 services:
+  stats-db:
+    image: postgres:16-alpine
+    container_name: stats-db
+    environment:
+      POSTGRES_DB: stats_db
+      POSTGRES_USER: stats_user
+      POSTGRES_PASSWORD: stats_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - stats-db-data:/var/lib/postgresql/data
+    networks:
+      - ewm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stats_user -d stats_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   stats-server:
+    build:
+      context: .
+      dockerfile: stats-service/stats-server/Dockerfile
+    container_name: stats-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats_db
+      SPRING_DATASOURCE_USERNAME: stats_user
+      SPRING_DATASOURCE_PASSWORD: stats_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SERVER_PORT: 9090
     ports:
       - "9090:9090"
+    depends_on:
+      stats-db:
+        condition: service_healthy
+    networks:
+      - ewm-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  stats-db:
-    image: postgres:16.1
-
+  # Временный ewm-service для тестов первого этапа
   ewm-service:
-    ports:
-      - "8080:8080"
+    image: alpine:latest
+    container_name: ewm-service-placeholder
+    command: ["echo", "Main service will be implemented in stage 2"]
+    networks:
+      - ewm-network
 
-  ewm-db:
-    image: postgres:16.1
+networks:
+  ewm-network:
+    driver: bridge
+
+volumes:
+  stats-db-data:

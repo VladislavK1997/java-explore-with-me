@@ -15,7 +15,6 @@
     <packaging>jar</packaging>
 
     <dependencies>
-        <!-- Spring Boot Actuator (ОБЯЗАТЕЛЬНО по ТЗ) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
