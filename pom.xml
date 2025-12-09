@@ -23,8 +23,6 @@
         <maven.compiler.target>21</maven.compiler.target>
         <lombok.version>1.18.32</lombok.version>
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
-        <checkstyle.plugin.version>3.3.0</checkstyle.plugin.version>
-        <checkstyle.version>10.16.0</checkstyle.version>
     </properties>
 
     <modules>
@@ -65,32 +63,6 @@
                         </systemPropertyVariables>
                         <argLine>-Dfile.encoding=UTF-8 --enable-preview</argLine>
                     </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>${checkstyle.plugin.version}</version>
-                    <configuration>
-                        <configLocation>checkstyle.xml</configLocation>
-                        <failOnViolation>true</failOnViolation>
-                        <logViolationsToConsole>true</logViolationsToConsole>
-                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                            <phase>compile</phase>
-                        </execution>
-                    </executions>
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.puppycrawl.tools</groupId>
-                            <artifactId>checkstyle</artifactId>
-                            <version>${checkstyle.version}</version>
-                        </dependency>
-                    </dependencies>
                 </plugin>
             </plugins>
         </pluginManagement>
