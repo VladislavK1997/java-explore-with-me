@@ -27,7 +27,11 @@ public class StatsServiceImpl implements StatsService {
     @Override
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end,
                                        List<String> uris, Boolean unique) {
-        if (start != null && end != null && start.isAfter(end)) {
+        if (start == null || end == null) {
+            throw new IllegalArgumentException("Start and end dates must not be null");
+        }
+
+        if (start.isAfter(end)) {
             throw new IllegalArgumentException("Start date must be before end date");
         }
 

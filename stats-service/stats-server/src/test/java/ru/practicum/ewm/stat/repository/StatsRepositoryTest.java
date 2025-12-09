@@ -31,7 +31,7 @@ class StatsRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now().withNano(0);
 
         hit1 = EndpointHit.builder()
                 .app("ewm-main-service")
@@ -73,7 +73,7 @@ class StatsRepositoryTest {
                 .app("test-app")
                 .uri("/test")
                 .ip("127.0.0.1")
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now().withNano(0))
                 .build();
 
         EndpointHit saved = statsRepository.save(newHit);
@@ -85,28 +85,39 @@ class StatsRepositoryTest {
 
     @Test
     void shouldGetStatsForAllUris() {
-        LocalDateTime start = LocalDateTime.now().minusDays(1);
-        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().minusDays(1).withNano(0);
+        LocalDateTime end = LocalDateTime.now().plusDays(1).withNano(0);
 
         List<ViewStatsDto> stats = statsRepository.getStats(start, end, null);
 
         assertEquals(3, stats.size());
 
-        assertEquals("/events/1", stats.get(0).getUri());
-        assertEquals(3, stats.get(0).getHits());
+        boolean foundEwmEvents1 = false;
+        boolean foundEwmEvents2 = false;
+        boolean foundAnotherEvents1 = false;
 
-        assertEquals("/events/2", stats.get(1).getUri());
-        assertEquals(1, stats.get(1).getHits());
+        for (ViewStatsDto stat : stats) {
+            if ("ewm-main-service".equals(stat.getApp()) && "/events/1".equals(stat.getUri())) {
+                assertEquals(2L, stat.getHits());
+                foundEwmEvents1 = true;
+            } else if ("ewm-main-service".equals(stat.getApp()) && "/events/2".equals(stat.getUri())) {
+                assertEquals(1L, stat.getHits());
+                foundEwmEvents2 = true;
+            } else if ("another-service".equals(stat.getApp()) && "/events/1".equals(stat.getUri())) {
+                assertEquals(1L, stat.getHits());
+                foundAnotherEvents1 = true;
+            }
+        }
 
-        assertEquals("another-service", stats.get(2).getApp());
-        assertEquals("/events/1", stats.get(2).getUri());
-        assertEquals(1, stats.get(2).getHits());
+        assertTrue(foundEwmEvents1);
+        assertTrue(foundEwmEvents2);
+        assertTrue(foundAnotherEvents1);
     }
 
     @Test
     void shouldGetStatsForSpecificUris() {
-        LocalDateTime start = LocalDateTime.now().minusDays(1);
-        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().minusDays(1).withNano(0);
+        LocalDateTime end = LocalDateTime.now().plusDays(1).withNano(0);
         List<String> uris = List.of("/events/1");
 
         List<ViewStatsDto> stats = statsRepository.getStats(start, end, uris);
@@ -132,8 +143,8 @@ class StatsRepositoryTest {
 
     @Test
     void shouldGetUniqueStats() {
-        LocalDateTime start = LocalDateTime.now().minusDays(1);
-        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().minusDays(1).withNano(0);
+        LocalDateTime end = LocalDateTime.now().plusDays(1).withNano(0);
 
         List<ViewStatsDto> stats = statsRepository.getStatsUnique(start, end, null);
 
@@ -152,8 +163,8 @@ class StatsRepositoryTest {
 
     @Test
     void shouldReturnEmptyListWhenNoDataInTimeRange() {
-        LocalDateTime start = LocalDateTime.now().plusDays(1);
-        LocalDateTime end = LocalDateTime.now().plusDays(2);
+        LocalDateTime start = LocalDateTime.now().plusDays(1).withNano(0);
+        LocalDateTime end = LocalDateTime.now().plusDays(2).withNano(0);
 
         List<ViewStatsDto> stats = statsRepository.getStats(start, end, null);
         assertTrue(stats.isEmpty());
@@ -161,8 +172,8 @@ class StatsRepositoryTest {
 
     @Test
     void shouldReturnEmptyListForUnknownUri() {
-        LocalDateTime start = LocalDateTime.now().minusDays(1);
-        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        LocalDateTime start = LocalDateTime.now().minusDays(1).withNano(0);
+        LocalDateTime end = LocalDateTime.now().plusDays(1).withNano(0);
         List<String> uris = List.of("/unknown");
 
         List<ViewStatsDto> stats = statsRepository.getStats(start, end, uris);

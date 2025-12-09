@@ -27,7 +27,7 @@ public class StatsClient {
     }
 
     public void hit(EndpointHitDto endpointHitDto) {
-        post("/hit", endpointHitDto);
+        makeAndSendRequest(HttpMethod.POST, "/hit", null, endpointHitDto);
     }
 
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end,
@@ -50,16 +50,12 @@ public class StatsClient {
         }
 
         ResponseEntity<ViewStatsDto[]> response = rest.getForEntity(
-                serverUrl + url.toString(),
+                serverUrl + url,
                 ViewStatsDto[].class,
                 parameters
         );
 
         return response.getBody() != null ? List.of(response.getBody()) : List.of();
-    }
-
-    private <T> void post(String path, T body) {
-        makeAndSendRequest(HttpMethod.POST, path, null, body);
     }
 
     private <T> ResponseEntity<Object> makeAndSendRequest(HttpMethod method, String path,
@@ -75,7 +71,11 @@ public class StatsClient {
                 response = rest.exchange(serverUrl + path, method, requestEntity, Object.class);
             }
         } catch (HttpStatusCodeException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsByteArray());
+            throw new RuntimeException("Request failed with status: " + e.getStatusCode(), e);
+        }
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new RuntimeException("Request failed with status: " + response.getStatusCode());
         }
 
         return response;

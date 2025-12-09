@@ -1,6 +1,7 @@
 package ru.practicum.ewm.stat.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,9 +43,10 @@ class StatsControllerTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
         formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        now = LocalDateTime.now();
+        now = LocalDateTime.now().withNano(0);
 
         endpointHitDto = new EndpointHitDto(
                 1L,
@@ -71,7 +73,7 @@ class StatsControllerTest {
     void shouldReturnBadRequestWhenHitHasInvalidData() throws Exception {
         EndpointHitDto invalidDto = new EndpointHitDto(
                 1L,
-                "", // Пустое app
+                "",
                 "/events/1",
                 "192.168.1.1",
                 now
@@ -87,8 +89,8 @@ class StatsControllerTest {
 
     @Test
     void shouldGetStats() throws Exception {
-        LocalDateTime start = now.minusDays(1);
-        LocalDateTime end = now.plusDays(1);
+        LocalDateTime start = now.minusDays(1).withNano(0);
+        LocalDateTime end = now.plusDays(1).withNano(0);
         List<String> uris = List.of("/events/1");
         Boolean unique = false;
 
@@ -113,8 +115,8 @@ class StatsControllerTest {
 
     @Test
     void shouldGetStatsWithMultipleUris() throws Exception {
-        LocalDateTime start = now.minusDays(1);
-        LocalDateTime end = now.plusDays(1);
+        LocalDateTime start = now.minusDays(1).withNano(0);
+        LocalDateTime end = now.plusDays(1).withNano(0);
 
         List<ViewStatsDto> expectedStats = List.of(
                 new ViewStatsDto("ewm-main-service", "/events/1", 10L),
@@ -136,8 +138,8 @@ class StatsControllerTest {
 
     @Test
     void shouldGetUniqueStats() throws Exception {
-        LocalDateTime start = now.minusDays(1);
-        LocalDateTime end = now.plusDays(1);
+        LocalDateTime start = now.minusDays(1).withNano(0);
+        LocalDateTime end = now.plusDays(1).withNano(0);
 
         List<ViewStatsDto> expectedStats = List.of(
                 new ViewStatsDto("ewm-main-service", "/events/1", 5L)
@@ -157,8 +159,8 @@ class StatsControllerTest {
 
     @Test
     void shouldGetStatsWithoutUrisParameter() throws Exception {
-        LocalDateTime start = now.minusDays(1);
-        LocalDateTime end = now.plusDays(1);
+        LocalDateTime start = now.minusDays(1).withNano(0);
+        LocalDateTime end = now.plusDays(1).withNano(0);
 
         List<ViewStatsDto> expectedStats = List.of(
                 new ViewStatsDto("ewm-main-service", "/events/1", 10L)
@@ -169,15 +171,18 @@ class StatsControllerTest {
         mockMvc.perform(get("/stats")
                         .param("start", start.format(formatter))
                         .param("end", end.format(formatter)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].app").value("ewm-main-service"))
+                .andExpect(jsonPath("$[0].uri").value("/events/1"))
+                .andExpect(jsonPath("$[0].hits").value(10));
 
         verify(statsService, times(1)).getStats(start, end, null, false);
     }
 
     @Test
     void shouldReturnBadRequestWhenDatesInvalid() throws Exception {
-        LocalDateTime start = now.plusDays(1);
-        LocalDateTime end = now.minusDays(1);
+        LocalDateTime start = now.plusDays(1).withNano(0);
+        LocalDateTime end = now.minusDays(1).withNano(0);
 
         when(statsService.getStats(start, end, null, false))
                 .thenThrow(new IllegalArgumentException("Start date must be before end date"));
@@ -190,8 +195,8 @@ class StatsControllerTest {
 
     @Test
     void shouldReturnEmptyListWhenNoStatsFound() throws Exception {
-        LocalDateTime start = now.minusDays(1);
-        LocalDateTime end = now.plusDays(1);
+        LocalDateTime start = now.minusDays(1).withNano(0);
+        LocalDateTime end = now.plusDays(1).withNano(0);
 
         when(statsService.getStats(start, end, null, false)).thenReturn(List.of());
 

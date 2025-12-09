@@ -12,6 +12,7 @@ services:
       - "5433:5432"
     volumes:
       - stats-db-data:/var/lib/postgresql/data
+      - ./stats-service/stats-server/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - ewm-network
     healthcheck:
@@ -29,8 +30,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats_db
       SPRING_DATASOURCE_USERNAME: stats_user
       SPRING_DATASOURCE_PASSWORD: stats_password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SERVER_PORT: 9090
+      SPRING_PROFILES_ACTIVE: prod
     ports:
       - "9090:9090"
     depends_on:
@@ -39,18 +41,10 @@ services:
     networks:
       - ewm-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-
-  # Временный ewm-service для тестов первого этапа
-  ewm-service:
-    image: alpine:latest
-    container_name: ewm-service-placeholder
-    command: ["echo", "Main service will be implemented in stage 2"]
-    networks:
-      - ewm-network
 
 networks:
   ewm-network:
