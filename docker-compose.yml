@@ -44,6 +44,13 @@ services:
       timeout: 10s
       retries: 3
 
+  ewm-service:
+    image: alpine:latest
+    container_name: ewm-service-placeholder
+    command: ["echo", "Main service will be implemented in stage 2"]
+    networks:
+      - ewm-network
+
 networks:
   ewm-network:
     driver: bridge

@@ -1,7 +1,8 @@
 FROM eclipse-temurin:21-jdk-alpine as builder
 WORKDIR /app
 COPY . .
-RUN ./mvnw clean package -DskipTests -pl stats-server -am
+RUN chmod +x mvnw && \
+    ./mvnw clean package -DskipTests -pl stats-server -am
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
