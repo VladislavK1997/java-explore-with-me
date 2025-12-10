@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.exception.ConflictException;
@@ -49,14 +51,13 @@ class EventServiceImplTest {
 
     @Test
     void createEvent_ValidData_ReturnsEventFullDto() {
-        // Given
         Long userId = 1L;
         Long categoryId = 2L;
 
         NewEventDto newEventDto = new NewEventDto(
-                "Event annotation",
+                "Valid annotation with at least 20 characters",
                 categoryId,
-                "Event description",
+                "Valid description with at least 20 characters",
                 futureDate,
                 new LocationDto(55.754167f, 37.62f),
                 false,
@@ -77,14 +78,12 @@ class EventServiceImplTest {
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
         when(eventRepository.save(any(Event.class))).thenReturn(event);
 
-        // When
         EventFullDto result = eventService.createEvent(userId, newEventDto);
 
-        // Then
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals("Test Event", result.getTitle());
-        assertEquals("Event annotation", result.getAnnotation());
+        assertEquals("Valid annotation with at least 20 characters", result.getAnnotation());
         assertEquals(futureDate, result.getEventDate());
         assertEquals(EventState.PENDING, result.getState());
         verify(userRepository, times(1)).findById(userId);
@@ -94,10 +93,9 @@ class EventServiceImplTest {
 
     @Test
     void createEvent_EventDateTooSoon_ThrowsValidationException() {
-        // Given
         Long userId = 1L;
         Long categoryId = 2L;
-        LocalDateTime tooSoonDate = now.plusHours(1); // Меньше 2 часов
+        LocalDateTime tooSoonDate = now.plusHours(1);
 
         NewEventDto newEventDto = new NewEventDto(
                 "Event annotation",
@@ -117,16 +115,16 @@ class EventServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
 
-        // When & Then
         ValidationException exception = assertThrows(ValidationException.class,
                 () -> eventService.createEvent(userId, newEventDto));
         assertTrue(exception.getMessage().contains("должно содержать дату, которая еще не наступила"));
+        verify(userRepository, times(1)).findById(userId);
+        verify(categoryRepository, times(1)).findById(categoryId);
         verify(eventRepository, never()).save(any());
     }
 
     @Test
     void createEvent_UserNotFound_ThrowsNotFoundException() {
-        // Given
         Long userId = 999L;
         Long categoryId = 2L;
 
@@ -144,7 +142,6 @@ class EventServiceImplTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        // When & Then
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> eventService.createEvent(userId, newEventDto));
         assertEquals("User with id=999 was not found", exception.getMessage());
@@ -155,7 +152,6 @@ class EventServiceImplTest {
 
     @Test
     void createEvent_CategoryNotFound_ThrowsNotFoundException() {
-        // Given
         Long userId = 1L;
         Long categoryId = 999L;
 
@@ -176,7 +172,6 @@ class EventServiceImplTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
 
-        // When & Then
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> eventService.createEvent(userId, newEventDto));
         assertEquals("Category with id=999 was not found", exception.getMessage());
@@ -187,7 +182,6 @@ class EventServiceImplTest {
 
     @Test
     void getEventsByUser_ValidUserId_ReturnsEventShortDtoList() {
-        // Given
         Long userId = 1L;
         Event event1 = Event.builder()
                 .id(1L)
@@ -213,14 +207,13 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
+        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
         when(eventRepository.findByInitiatorId(userId, PageRequest.of(0, 10)))
-                .thenReturn(List.of(event1, event2));
-        when(statsService.getViews(any())).thenReturn(Map.of(1L, 100L, 2L, 200L));
+                .thenReturn(eventPage.getContent());
+        when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
-        // When
         List<EventShortDto> result = eventService.getEventsByUser(userId, 0, 10);
 
-        // Then
         assertEquals(2, result.size());
         assertEquals("Event 1", result.get(0).getTitle());
         assertEquals("Event 2", result.get(1).getTitle());
@@ -230,7 +223,6 @@ class EventServiceImplTest {
 
     @Test
     void getEventByUser_ValidIds_ReturnsEventFullDto() {
-        // Given
         Long userId = 1L;
         Long eventId = 10L;
 
@@ -257,10 +249,8 @@ class EventServiceImplTest {
         when(statsService.getViews(List.of(eventId)))
                 .thenReturn(Map.of(eventId, 500L));
 
-        // When
         EventFullDto result = eventService.getEventByUser(userId, eventId);
 
-        // Then
         assertNotNull(result);
         assertEquals(eventId, result.getId());
         assertEquals("Test Event", result.getTitle());
@@ -273,14 +263,12 @@ class EventServiceImplTest {
 
     @Test
     void getEventByUser_EventNotFound_ThrowsNotFoundException() {
-        // Given
         Long userId = 1L;
         Long eventId = 999L;
 
         when(eventRepository.findByIdAndInitiatorId(eventId, userId))
                 .thenReturn(Optional.empty());
 
-        // When & Then
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> eventService.getEventByUser(userId, eventId));
         assertEquals("Event with id=999 was not found", exception.getMessage());
@@ -290,7 +278,6 @@ class EventServiceImplTest {
 
     @Test
     void updateEventByUser_ValidUpdate_ReturnsUpdatedEvent() {
-        // Given
         Long userId = 1L;
         Long eventId = 10L;
 
@@ -327,12 +314,10 @@ class EventServiceImplTest {
                 .thenReturn(Optional.of(existingEvent));
         when(categoryRepository.findById(2L)).thenReturn(Optional.of(newCategory));
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(statsService.getViews(any())).thenReturn(Map.of(eventId, 100L));
+        when(statsService.getViews(List.of(eventId))).thenReturn(Map.of(eventId, 100L));
 
-        // When
         EventFullDto result = eventService.updateEventByUser(userId, eventId, updateRequest);
 
-        // Then
         assertNotNull(result);
         assertEquals("New Title", result.getTitle());
         assertEquals("New Annotation", result.getAnnotation());
@@ -344,7 +329,6 @@ class EventServiceImplTest {
 
     @Test
     void updateEventByUser_PublishedEvent_ThrowsConflictException() {
-        // Given
         Long userId = 1L;
         Long eventId = 10L;
 
@@ -362,7 +346,6 @@ class EventServiceImplTest {
         when(eventRepository.findByIdAndInitiatorId(eventId, userId))
                 .thenReturn(Optional.of(publishedEvent));
 
-        // When & Then
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> eventService.updateEventByUser(userId, eventId, updateRequest));
         assertEquals("Only pending or canceled events can be changed", exception.getMessage());
@@ -372,7 +355,6 @@ class EventServiceImplTest {
 
     @Test
     void updateEventByUser_EventDateTooSoon_ThrowsValidationException() {
-        // Given
         Long userId = 1L;
         Long eventId = 10L;
 
@@ -385,12 +367,11 @@ class EventServiceImplTest {
                 .build();
 
         UpdateEventUserRequest updateRequest = new UpdateEventUserRequest();
-        updateRequest.setEventDate(now.plusHours(1)); // Меньше 2 часов
+        updateRequest.setEventDate(now.plusHours(1));
 
         when(eventRepository.findByIdAndInitiatorId(eventId, userId))
                 .thenReturn(Optional.of(existingEvent));
 
-        // When & Then
         ValidationException exception = assertThrows(ValidationException.class,
                 () -> eventService.updateEventByUser(userId, eventId, updateRequest));
         assertTrue(exception.getMessage().contains("должно содержать дату, которая еще не наступила"));
@@ -400,14 +381,13 @@ class EventServiceImplTest {
 
     @Test
     void updateEventByAdmin_PublishEvent_ValidState_ReturnsPublishedEvent() {
-        // Given
         Long eventId = 10L;
 
         Event pendingEvent = Event.builder()
                 .id(eventId)
                 .title("Test Event")
                 .state(EventState.PENDING)
-                .eventDate(futureDate.plusHours(2)) // Через 2+ часа от текущего времени
+                .eventDate(futureDate.plusHours(2))
                 .initiator(User.builder().id(1L).build())
                 .category(Category.builder().id(1L).build())
                 .paid(true)
@@ -422,12 +402,10 @@ class EventServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(pendingEvent));
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(statsService.getViews(any())).thenReturn(Map.of(eventId, 100L));
+        when(statsService.getViews(List.of(eventId))).thenReturn(Map.of(eventId, 100L));
 
-        // When
         EventFullDto result = eventService.updateEventByAdmin(eventId, updateRequest);
 
-        // Then
         assertNotNull(result);
         assertEquals(EventState.PUBLISHED, result.getState());
         assertNotNull(result.getPublishedOn());
@@ -437,14 +415,13 @@ class EventServiceImplTest {
 
     @Test
     void updateEventByAdmin_PublishEvent_EventDateTooSoon_ThrowsConflictException() {
-        // Given
         Long eventId = 10L;
 
         Event pendingEvent = Event.builder()
                 .id(eventId)
                 .title("Test Event")
                 .state(EventState.PENDING)
-                .eventDate(now.plusMinutes(30)) // Меньше 1 часа
+                .eventDate(now.plusMinutes(30))
                 .build();
 
         UpdateEventAdminRequest updateRequest = new UpdateEventAdminRequest();
@@ -452,7 +429,6 @@ class EventServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(pendingEvent));
 
-        // When & Then
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> eventService.updateEventByAdmin(eventId, updateRequest));
         assertTrue(exception.getMessage().contains("Cannot publish the event because the event date is too soon"));
@@ -462,7 +438,6 @@ class EventServiceImplTest {
 
     @Test
     void updateEventByAdmin_PublishEvent_NotPendingState_ThrowsConflictException() {
-        // Given
         Long eventId = 10L;
 
         Event publishedEvent = Event.builder()
@@ -477,7 +452,6 @@ class EventServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(publishedEvent));
 
-        // When & Then
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> eventService.updateEventByAdmin(eventId, updateRequest));
         assertTrue(exception.getMessage().contains("Cannot publish the event because it's not in the right state"));
@@ -487,7 +461,6 @@ class EventServiceImplTest {
 
     @Test
     void updateEventByAdmin_RejectEvent_NotPublished_ReturnsCanceledEvent() {
-        // Given
         Long eventId = 10L;
 
         Event pendingEvent = Event.builder()
@@ -509,12 +482,10 @@ class EventServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(pendingEvent));
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(statsService.getViews(any())).thenReturn(Map.of(eventId, 100L));
+        when(statsService.getViews(List.of(eventId))).thenReturn(Map.of(eventId, 100L));
 
-        // When
         EventFullDto result = eventService.updateEventByAdmin(eventId, updateRequest);
 
-        // Then
         assertNotNull(result);
         assertEquals(EventState.CANCELED, result.getState());
         verify(eventRepository, times(1)).findById(eventId);
@@ -523,7 +494,6 @@ class EventServiceImplTest {
 
     @Test
     void updateEventByAdmin_RejectEvent_AlreadyPublished_ThrowsConflictException() {
-        // Given
         Long eventId = 10L;
 
         Event publishedEvent = Event.builder()
@@ -538,7 +508,6 @@ class EventServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(publishedEvent));
 
-        // When & Then
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> eventService.updateEventByAdmin(eventId, updateRequest));
         assertTrue(exception.getMessage().contains("Cannot reject the event because it's already published"));
@@ -548,7 +517,6 @@ class EventServiceImplTest {
 
     @Test
     void getEventPublic_ExistingPublishedEvent_ReturnsEventFullDto() {
-        // Given
         Long eventId = 10L;
         String ip = "192.168.1.1";
 
@@ -572,10 +540,8 @@ class EventServiceImplTest {
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(publishedEvent));
         when(statsService.getViews(List.of(eventId))).thenReturn(Map.of(eventId, 1000L));
 
-        // When
         EventFullDto result = eventService.getEventPublic(eventId, ip);
 
-        // Then
         assertNotNull(result);
         assertEquals(eventId, result.getId());
         assertEquals("Published Event", result.getTitle());
@@ -588,7 +554,6 @@ class EventServiceImplTest {
 
     @Test
     void getEventPublic_NotPublishedEvent_ThrowsNotFoundException() {
-        // Given
         Long eventId = 10L;
         String ip = "192.168.1.1";
 
@@ -600,7 +565,6 @@ class EventServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(pendingEvent));
 
-        // When & Then
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> eventService.getEventPublic(eventId, ip));
         assertEquals("Event with id=10 was not found", exception.getMessage());
@@ -611,13 +575,11 @@ class EventServiceImplTest {
 
     @Test
     void getEventPublic_NonExistingEvent_ThrowsNotFoundException() {
-        // Given
         Long eventId = 999L;
         String ip = "192.168.1.1";
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
 
-        // When & Then
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> eventService.getEventPublic(eventId, ip));
         assertEquals("Event with id=999 was not found", exception.getMessage());
@@ -628,7 +590,6 @@ class EventServiceImplTest {
 
     @Test
     void getEventsPublic_WithFilters_ReturnsFilteredEvents() {
-        // Given
         String text = "test";
         List<Long> categories = List.of(1L, 2L);
         Boolean paid = true;
@@ -670,16 +631,15 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
+        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
         when(eventRepository.findEventsPublic(
                 eq(text), eq(categories), eq(paid), any(), any(), eq(onlyAvailable), any(PageRequest.class)))
-                .thenReturn(List.of(event1, event2));
+                .thenReturn(eventPage.getContent());
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
-        // When
         List<EventShortDto> result = eventService.getEventsPublic(
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, ip);
 
-        // Then
         assertEquals(2, result.size());
         assertEquals("Test Event 1", result.get(0).getTitle());
         assertEquals("Test Event 2", result.get(1).getTitle());
@@ -691,7 +651,6 @@ class EventServiceImplTest {
 
     @Test
     void getEventsByAdmin_WithFilters_ReturnsFilteredEvents() {
-        // Given
         List<Long> users = List.of(1L, 2L);
         List<String> states = List.of("PENDING", "PUBLISHED");
         List<Long> categories = List.of(1L, 2L);
@@ -722,16 +681,15 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
+        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
         when(eventRepository.findEventsByAdmin(
                 eq(users), any(), eq(categories), any(), any(), any(PageRequest.class)))
-                .thenReturn(List.of(event1, event2));
+                .thenReturn(eventPage.getContent());
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
-        // When
         List<EventFullDto> result = eventService.getEventsByAdmin(
                 users, states, categories, rangeStart, rangeEnd, from, size);
 
-        // Then
         assertEquals(2, result.size());
         assertEquals("Event 1", result.get(0).getTitle());
         assertEquals("Event 2", result.get(1).getTitle());
@@ -744,7 +702,6 @@ class EventServiceImplTest {
 
     @Test
     void getEventsPublic_SortByViews_ReturnsSortedByViews() {
-        // Given
         String ip = "192.168.1.1";
         String sort = "VIEWS";
 
@@ -784,41 +741,76 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
+        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2, event3));
         when(eventRepository.findEventsPublic(
                 any(), any(), any(), any(), any(), any(), any(PageRequest.class)))
-                .thenReturn(List.of(event1, event2, event3));
+                .thenReturn(eventPage.getContent());
         when(statsService.getViews(List.of(1L, 2L, 3L)))
                 .thenReturn(Map.of(1L, 100L, 2L, 300L, 3L, 200L));
 
-        // When
         List<EventShortDto> result = eventService.getEventsPublic(
                 null, null, null, null, null, false, sort, 0, 10, ip);
 
-        // Then
         assertEquals(3, result.size());
-        // Проверяем, что события отсортированы по убыванию просмотров
-        assertEquals(2L, result.get(0).getId()); // 300 просмотров
-        assertEquals(3L, result.get(1).getId()); // 200 просмотров
-        assertEquals(1L, result.get(2).getId()); // 100 просмотров
+        assertEquals(2L, result.get(0).getId());
+        assertEquals(3L, result.get(1).getId());
+        assertEquals(1L, result.get(2).getId());
         verify(statsService, times(1)).saveHit("/events", ip);
     }
 
     @Test
     void getEventsByUser_EmptyResult_ReturnsEmptyList() {
-        // Given
         Long userId = 1L;
 
+        Page<Event> emptyPage = new PageImpl<>(List.of());
         when(eventRepository.findByInitiatorId(userId, PageRequest.of(0, 10)))
-                .thenReturn(List.of());
-        when(statsService.getViews(any())).thenReturn(Map.of());
+                .thenReturn(emptyPage.getContent());
+        when(statsService.getViews(List.of())).thenReturn(Map.of());
 
-        // When
         List<EventShortDto> result = eventService.getEventsByUser(userId, 0, 10);
 
-        // Then
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(eventRepository, times(1)).findByInitiatorId(userId, PageRequest.of(0, 10));
         verify(statsService, times(1)).getViews(List.of());
+    }
+
+    @Test
+    void getEventsPublic_InvalidPagination_ThrowsValidationException() {
+        String ip = "192.168.1.1";
+
+        ValidationException exception1 = assertThrows(ValidationException.class,
+                () -> eventService.getEventsPublic(null, null, null, null, null,
+                        false, null, -1, 10, ip));
+        assertTrue(exception1.getMessage().contains("Parameter 'from' must be greater than or equal to 0"));
+
+        ValidationException exception2 = assertThrows(ValidationException.class,
+                () -> eventService.getEventsPublic(null, null, null, null, null,
+                        false, null, 0, 0, ip));
+        assertTrue(exception2.getMessage().contains("Parameter 'size' must be greater than 0"));
+    }
+
+    @Test
+    void getEventsPublic_InvalidSortParameter_ThrowsValidationException() {
+        String ip = "192.168.1.1";
+        String invalidSort = "INVALID_SORT";
+
+        ValidationException exception = assertThrows(ValidationException.class,
+                () -> eventService.getEventsPublic(null, null, null, null, null,
+                        false, invalidSort, 0, 10, ip));
+        assertTrue(exception.getMessage().contains("Invalid sort parameter"));
+    }
+
+    @Test
+    void getEventsByUser_InvalidPagination_ThrowsValidationException() {
+        Long userId = 1L;
+
+        ValidationException exception1 = assertThrows(ValidationException.class,
+                () -> eventService.getEventsByUser(userId, -1, 10));
+        assertTrue(exception1.getMessage().contains("Parameter 'from' must be greater than or equal to 0"));
+
+        ValidationException exception2 = assertThrows(ValidationException.class,
+                () -> eventService.getEventsByUser(userId, 0, 0));
+        assertTrue(exception2.getMessage().contains("Parameter 'size' must be greater than 0"));
     }
 }

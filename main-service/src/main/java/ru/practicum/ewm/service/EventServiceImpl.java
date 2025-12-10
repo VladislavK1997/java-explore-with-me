@@ -30,102 +30,98 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final StatsService statsService;
 
-    private static final DateTimeFormatter[] FORMATTERS = {
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"),
-            DateTimeFormatter.ISO_LOCAL_DATE_TIME
-    };
-
     @Override
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                                String rangeStart, String rangeEnd, Integer from, Integer size) {
-        try {
-            PageRequest page = PageRequest.of(from / size, size);
+        validatePagination(from, size);
 
-            List<EventState> eventStates = null;
-            if (states != null && !states.isEmpty()) {
-                try {
-                    eventStates = states.stream()
-                            .map(EventState::valueOf)
-                            .collect(Collectors.toList());
-                } catch (IllegalArgumentException e) {
-                    throw new ValidationException("Invalid state value: " + states);
-                }
+        PageRequest page = PageRequest.of(from / size, size);
+
+        List<EventState> eventStates = null;
+        if (states != null && !states.isEmpty()) {
+            try {
+                eventStates = states.stream()
+                        .map(EventState::valueOf)
+                        .collect(Collectors.toList());
+            } catch (IllegalArgumentException e) {
+                throw new ValidationException("Invalid state value in states parameter");
             }
-
-            LocalDateTime start = parseDateTime(rangeStart);
-            LocalDateTime end = parseDateTime(rangeEnd);
-
-            List<Event> events = eventRepository.findEventsByAdmin(users, eventStates, categories, start, end, page);
-
-            Map<Long, Long> views = statsService.getViews(events.stream()
-                    .map(Event::getId)
-                    .collect(Collectors.toList()));
-
-            return events.stream()
-                    .map(event -> {
-                        event.setViews(views.getOrDefault(event.getId(), 0L));
-                        return EventMapper.toEventFullDto(event);
-                    })
-                    .collect(Collectors.toList());
-        } catch (ValidationException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Error in getEventsByAdmin", e);
-            throw new ValidationException("Error processing request: " + e.getMessage());
         }
+
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        try {
+            start = parseDateTime(rangeStart);
+            end = parseDateTime(rangeEnd);
+        } catch (ValidationException e) {
+            throw e; // Пробрасываем дальше для обработки в ErrorHandler
+        }
+
+        List<Event> events = eventRepository.findEventsByAdmin(users, eventStates, categories, start, end, page);
+
+        Map<Long, Long> views = statsService.getViews(events.stream()
+                .map(Event::getId)
+                .collect(Collectors.toList()));
+
+        return events.stream()
+                .map(event -> {
+                    event.setViews(views.getOrDefault(event.getId(), 0L));
+                    return EventMapper.toEventFullDto(event);
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateRequest) {
-        try {
-            Event event = eventRepository.findById(eventId)
-                    .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
-            if (updateRequest.getStateAction() != null) {
-                switch (updateRequest.getStateAction()) {
-                    case "PUBLISH_EVENT":
-                        if (event.getState() != EventState.PENDING) {
-                            throw new ConflictException("Cannot publish the event because it's not in the right state: " + event.getState());
-                        }
-                        if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
-                            throw new ConflictException("Cannot publish the event because the event date is too soon");
-                        }
-                        event.setState(EventState.PUBLISHED);
-                        event.setPublishedOn(LocalDateTime.now());
-                        break;
-                    case "REJECT_EVENT":
-                        if (event.getState() == EventState.PUBLISHED) {
-                            throw new ConflictException("Cannot reject the event because it's already published");
-                        }
-                        event.setState(EventState.CANCELED);
-                        break;
-                    default:
-                        throw new ValidationException("Invalid state action: " + updateRequest.getStateAction());
-                }
+        if (updateRequest.getStateAction() != null) {
+            switch (updateRequest.getStateAction()) {
+                case "PUBLISH_EVENT":
+                    if (event.getState() != EventState.PENDING) {
+                        throw new ConflictException("Cannot publish the event because it's not in the right state: " + event.getState());
+                    }
+                    if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1))) {
+                        throw new ConflictException("Cannot publish the event because the event date is too soon");
+                    }
+                    event.setState(EventState.PUBLISHED);
+                    event.setPublishedOn(LocalDateTime.now());
+                    break;
+                case "REJECT_EVENT":
+                    if (event.getState() == EventState.PUBLISHED) {
+                        throw new ConflictException("Cannot reject the event because it's already published");
+                    }
+                    event.setState(EventState.CANCELED);
+                    break;
+                default:
+                    throw new ValidationException("Invalid state action: " + updateRequest.getStateAction());
             }
-
-            updateEventFields(event, updateRequest);
-            Event updatedEvent = eventRepository.save(event);
-
-            Long views = statsService.getViews(List.of(eventId)).getOrDefault(eventId, 0L);
-            updatedEvent.setViews(views);
-
-            return EventMapper.toEventFullDto(updatedEvent);
-        } catch (ValidationException | ConflictException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Error in updateEventByAdmin", e);
-            throw new RuntimeException("Internal server error");
         }
+
+        if (updateRequest.getEventDate() != null) {
+            try {
+                LocalDateTime newEventDate = parseDateTime(updateRequest.getEventDate().toString());
+                event.setEventDate(newEventDate);
+            } catch (ValidationException e) {
+                throw e;
+            }
+        }
+
+        updateEventFields(event, updateRequest);
+        Event updatedEvent = eventRepository.save(event);
+
+        Long views = statsService.getViews(List.of(eventId)).getOrDefault(eventId, 0L);
+        updatedEvent.setViews(views);
+
+        return EventMapper.toEventFullDto(updatedEvent);
     }
 
     @Override
     public List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size) {
-        if (from < 0 || size <= 0) {
-            throw new ValidationException("Invalid pagination parameters: from must be >= 0, size must be > 0");
-        }
+        validatePagination(from, size);
 
         PageRequest page = PageRequest.of(from / size, size);
         List<Event> events = eventRepository.findByInitiatorId(userId, page);
@@ -197,9 +193,15 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        if (updateRequest.getEventDate() != null &&
-                updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + updateRequest.getEventDate());
+        if (updateRequest.getEventDate() != null) {
+            try {
+                if (updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+                    throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + updateRequest.getEventDate());
+                }
+                event.setEventDate(updateRequest.getEventDate());
+            } catch (DateTimeParseException e) {
+                throw new ValidationException("Invalid date format: " + updateRequest.getEventDate());
+            }
         }
 
         updateEventFields(event, updateRequest);
@@ -215,12 +217,14 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEventsPublic(String text, List<Long> categories, Boolean paid,
                                                String rangeStart, String rangeEnd, Boolean onlyAvailable,
                                                String sort, Integer from, Integer size, String ip) {
-        if (from < 0 || size <= 0) {
-            throw new ValidationException("Invalid pagination parameters: from must be >= 0, size must be > 0");
-        }
+        validatePagination(from, size);
 
         if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
             throw new ValidationException("Invalid sort parameter: " + sort);
+        }
+
+        if (text != null && text.length() > 7000) {
+            throw new ValidationException("Text parameter is too long");
         }
 
         statsService.saveHit("/events", ip);
@@ -229,16 +233,24 @@ public class EventServiceImpl implements EventService {
         if ("EVENT_DATE".equals(sort)) {
             page = PageRequest.of(from / size, size, Sort.by("eventDate").descending());
         } else if ("VIEWS".equals(sort)) {
-            page = PageRequest.of(from / size, size, Sort.by(Sort.Direction.DESC, "views"));
+            page = PageRequest.of(from / size, size);
         } else {
             page = PageRequest.of(from / size, size);
         }
 
-        LocalDateTime start = parseDateTime(rangeStart);
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        try {
+            start = parseDateTime(rangeStart);
+            end = parseDateTime(rangeEnd);
+        } catch (ValidationException e) {
+            throw e;
+        }
+
         if (start == null) {
             start = LocalDateTime.now();
         }
-        LocalDateTime end = parseDateTime(rangeEnd);
 
         List<Event> events = eventRepository.findEventsPublic(text, categories, paid, start, end, onlyAvailable, page);
 
@@ -282,14 +294,24 @@ public class EventServiceImpl implements EventService {
             return null;
         }
 
-        for (DateTimeFormatter formatter : FORMATTERS) {
+        try {
+            return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (DateTimeParseException e1) {
             try {
-                return LocalDateTime.parse(dateTime, formatter);
-            } catch (DateTimeParseException e) {
+                return LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            } catch (DateTimeParseException e2) {
+                throw new ValidationException("Invalid date format: " + dateTime);
             }
         }
+    }
 
-        throw new ValidationException("Invalid date format: " + dateTime);
+    private void validatePagination(Integer from, Integer size) {
+        if (from < 0) {
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+        }
+        if (size <= 0) {
+            throw new ValidationException("Parameter 'size' must be greater than 0");
+        }
     }
 
     private void updateEventFields(Event event, Object updateRequest) {
@@ -311,7 +333,7 @@ public class EventServiceImpl implements EventService {
     private void updateCommonFields(Event event, String annotation, Long categoryId, String description,
                                     LocalDateTime eventDate, LocationDto location, Boolean paid,
                                     Integer participantLimit, Boolean requestModeration, String title) {
-        if (annotation != null) {
+        if (annotation != null && !annotation.isEmpty()) {
             event.setAnnotation(annotation);
         }
         if (categoryId != null) {
@@ -319,7 +341,7 @@ public class EventServiceImpl implements EventService {
                     .orElseThrow(() -> new NotFoundException("Category with id=" + categoryId + " was not found"));
             event.setCategory(category);
         }
-        if (description != null) {
+        if (description != null && !description.isEmpty()) {
             event.setDescription(description);
         }
         if (eventDate != null) {
@@ -337,7 +359,7 @@ public class EventServiceImpl implements EventService {
         if (requestModeration != null) {
             event.setRequestModeration(requestModeration);
         }
-        if (title != null) {
+        if (title != null && !title.isEmpty()) {
             event.setTitle(title);
         }
     }

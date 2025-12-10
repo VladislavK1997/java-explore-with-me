@@ -24,7 +24,7 @@ public class StatsService {
         EndpointHitDto hitDto = new EndpointHitDto(null, APP_NAME, uri, ip, LocalDateTime.now());
         try {
             statsClient.hit(hitDto);
-            log.info("Statistics saved for URI: {}", uri);
+            log.debug("Statistics saved for URI: {}", uri);
         } catch (Exception e) {
             log.error("Failed to save statistics for URI: {}", uri, e);
         }
@@ -43,31 +43,31 @@ public class StatsService {
         LocalDateTime end = LocalDateTime.now().plusDays(1);
 
         try {
-            List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, true); // true для уникальных просмотров
+            List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, true);
 
             Map<Long, Long> viewsMap = new HashMap<>();
 
-            for (Long eventId : eventIds) {
-                viewsMap.put(eventId, 0L);
-            }
+            eventIds.forEach(id -> viewsMap.put(id, 0L));
 
             for (ViewStatsDto stat : stats) {
                 String uri = stat.getUri();
-                if (uri.startsWith("/events/")) {
+                if (uri.startsWith("/events/") && uri.length() > "/events/".length()) {
                     try {
-                        Long eventId = Long.parseLong(uri.substring("/events/".length()));
-                        // Суммируем hits для одного и того же события
-                        viewsMap.merge(eventId, stat.getHits(), Long::sum);
+                        String idStr = uri.substring("/events/".length());
+                        Long eventId = Long.parseLong(idStr);
+                        if (eventIds.contains(eventId)) {
+                            viewsMap.put(eventId, stat.getHits());
+                        }
                     } catch (NumberFormatException e) {
-                        log.warn("Invalid event ID in URI: {}", uri);
+                        log.debug("Invalid event ID in URI: {}", uri);
                     }
                 }
             }
 
             return viewsMap;
         } catch (Exception e) {
-            log.error("Failed to get views statistics", e);
-            return eventIds.stream().collect(Collectors.toMap(id -> id, id -> 0L));
+            log.error("Failed to get views statistics: {}", e.getMessage());
+            return new HashMap<>();
         }
     }
 }
