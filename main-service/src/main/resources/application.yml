@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: main-service
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    hibernate:
+      ddl-auto: validate
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: WARN
+    ru.practicum: DEBUG
+    org.springframework.web: DEBUG
+
+stats:
+  server:
+    url: http://localhost:9090

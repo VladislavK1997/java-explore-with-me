@@ -1,0 +1,114 @@
+package ru.practicum.ewm.exception;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.practicum.ewm.dto.ApiError;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.List;
+
+@Slf4j
+@RestControllerAdvice
+public class ErrorHandler {
+
+    @ExceptionHandler(NotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError handleNotFoundException(NotFoundException e) {
+        log.error("Not found: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                e.getMessage(),
+                "The required object was not found.",
+                "NOT_FOUND",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleValidationException(ValidationException e) {
+        log.error("Validation error: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                e.getMessage(),
+                "Incorrectly made request.",
+                "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleConflictException(ConflictException e) {
+        log.error("Conflict: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                e.getMessage(),
+                "For the requested operation the conditions are not met.",
+                "CONFLICT",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        log.error("Validation error: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                "Validation failed",
+                "Incorrectly made request.",
+                "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleDataIntegrityViolationException(DataIntegrityViolationException e) {
+        log.error("Data integrity violation: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                "Integrity constraint has been violated.",
+                "Integrity constraint has been violated.",
+                "CONFLICT",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class,
+            DateTimeParseException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleBadRequestExceptions(Exception e) {
+        log.error("Bad request: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                e.getMessage(),
+                "Incorrectly made request.",
+                "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiError handleOtherExceptions(Exception e) {
+        log.error("Internal server error: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                e.getMessage(),
+                "Internal server error",
+                "INTERNAL_SERVER_ERROR",
+                LocalDateTime.now()
+        );
+    }
+}
