@@ -7,8 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.ewm.config.StatsClientConfig;
 import ru.practicum.ewm.dto.CompilationDto;
 import ru.practicum.ewm.dto.EventShortDto;
 import ru.practicum.ewm.dto.CategoryDto;
@@ -23,7 +25,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ActiveProfiles("test")
+@Import(StatsClientConfig.class)
 @WebMvcTest(PublicCompilationController.class)
 class PublicCompilationControllerTest {
 

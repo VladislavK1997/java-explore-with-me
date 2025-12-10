@@ -7,9 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.ewm.config.StatsClientConfig;
 import ru.practicum.ewm.dto.CategoryDto;
 import ru.practicum.ewm.dto.NewCategoryDto;
 import ru.practicum.ewm.service.CategoryService;
@@ -19,8 +20,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ActiveProfiles("test")
 @WebMvcTest(AdminCategoryController.class)
+@Import(StatsClientConfig.class)
 class AdminCategoryControllerTest {
 
     @Autowired
@@ -58,7 +59,7 @@ class AdminCategoryControllerTest {
 
     @Test
     void createCategory_InvalidRequest_ReturnsBadRequest() throws Exception {
-        NewCategoryDto invalidDto = new NewCategoryDto(""); // Пустое имя
+        NewCategoryDto invalidDto = new NewCategoryDto("");
 
         mockMvc.perform(post("/admin/categories")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -7,9 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.ewm.config.StatsClientConfig;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.model.EventState;
 import ru.practicum.ewm.service.EventService;
@@ -23,8 +24,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ActiveProfiles("test")
 @WebMvcTest(PrivateEventController.class)
+@Import(StatsClientConfig.class)
 class PrivateEventControllerTest {
 
     @Autowired
@@ -152,7 +153,7 @@ class PrivateEventControllerTest {
     @Test
     void createEvent_InvalidRequestBody_ReturnsBadRequest() throws Exception {
         NewEventDto invalidDto = new NewEventDto();
-        invalidDto.setTitle(""); // Пустой заголовок
+        invalidDto.setTitle("");
 
         mockMvc.perform(post("/users/{userId}/events", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -275,7 +276,7 @@ class PrivateEventControllerTest {
                 "Event annotation",
                 1L,
                 "Event description",
-                now.minusDays(1), // Дата в прошлом
+                now.minusDays(1),
                 new LocationDto(55.754167f, 37.62f),
                 false,
                 10,

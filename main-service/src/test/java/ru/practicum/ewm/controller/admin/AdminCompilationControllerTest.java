@@ -7,9 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.ewm.config.StatsClientConfig;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.service.CompilationService;
 
@@ -20,8 +21,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ActiveProfiles("test")
 @WebMvcTest(AdminCompilationController.class)
+@Import(StatsClientConfig.class)
 class AdminCompilationControllerTest {
 
     @Autowired
@@ -88,7 +89,7 @@ class AdminCompilationControllerTest {
     @Test
     void createCompilation_InvalidRequest_ReturnsBadRequest() throws Exception {
         NewCompilationDto invalidDto = new NewCompilationDto();
-        invalidDto.setTitle(""); // Пустой заголовок
+        invalidDto.setTitle("");
 
         mockMvc.perform(post("/admin/compilations")
                         .contentType(MediaType.APPLICATION_JSON)
