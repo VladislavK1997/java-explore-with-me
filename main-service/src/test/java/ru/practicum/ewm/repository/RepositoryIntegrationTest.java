@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
         "spring.datasource.driver-class-name=org.h2.Driver",
-        "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1",
+        "spring.datasource.url=jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false",
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.jpa.show-sql=false",
@@ -60,28 +60,35 @@ class RepositoryIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        // Создаем и сохраняем пользователей через TestEntityManager
         user1 = User.builder()
                 .name("John Doe")
                 .email("john@example.com")
                 .build();
-        user1 = userRepository.save(user1);
+        user1 = entityManager.persist(user1);
+        entityManager.flush();
 
         user2 = User.builder()
                 .name("Jane Smith")
                 .email("jane@example.com")
                 .build();
-        user2 = userRepository.save(user2);
+        user2 = entityManager.persist(user2);
+        entityManager.flush();
 
+        // Создаем и сохраняем категории
         category1 = Category.builder()
                 .name("Concerts")
                 .build();
-        category1 = categoryRepository.save(category1);
+        category1 = entityManager.persist(category1);
+        entityManager.flush();
 
         category2 = Category.builder()
                 .name("Theater")
                 .build();
-        category2 = categoryRepository.save(category2);
+        category2 = entityManager.persist(category2);
+        entityManager.flush();
 
+        // Создаем и сохраняем события
         event1 = Event.builder()
                 .title("Rock Concert")
                 .annotation("Amazing rock concert")
@@ -98,7 +105,8 @@ class RepositoryIntegrationTest {
                 .createdOn(now.minusDays(1))
                 .publishedOn(now.minusHours(1))
                 .build();
-        event1 = eventRepository.save(event1);
+        event1 = entityManager.persist(event1);
+        entityManager.flush();
 
         event2 = Event.builder()
                 .title("Theater Play")
@@ -115,7 +123,8 @@ class RepositoryIntegrationTest {
                 .confirmedRequests(10)
                 .createdOn(now.minusDays(1))
                 .build();
-        event2 = eventRepository.save(event2);
+        event2 = entityManager.persist(event2);
+        entityManager.flush();
 
         event3 = Event.builder()
                 .title("Jazz Concert")
@@ -132,7 +141,8 @@ class RepositoryIntegrationTest {
                 .confirmedRequests(0)
                 .createdOn(now.minusDays(2))
                 .build();
-        event3 = eventRepository.save(event3);
+        event3 = entityManager.persist(event3);
+        entityManager.flush();
     }
 
     @Test
@@ -143,6 +153,7 @@ class RepositoryIntegrationTest {
                 .build();
 
         User savedUser = userRepository.save(newUser);
+        entityManager.flush();
 
         Optional<User> foundUserOpt = userRepository.findById(savedUser.getId());
         assertTrue(foundUserOpt.isPresent());
@@ -179,6 +190,7 @@ class RepositoryIntegrationTest {
                 .build();
 
         Category savedCategory = categoryRepository.save(newCategory);
+        entityManager.flush();
 
         Category foundCategory = categoryRepository.findById(savedCategory.getId()).orElse(null);
 
@@ -277,7 +289,8 @@ class RepositoryIntegrationTest {
                 .state(EventState.PUBLISHED)
                 .createdOn(now)
                 .build();
-        eventRepository.save(fullEvent);
+        entityManager.persist(fullEvent);
+        entityManager.flush();
 
         Boolean onlyAvailable = true;
 
@@ -305,7 +318,8 @@ class RepositoryIntegrationTest {
                 .state(EventState.PUBLISHED)
                 .createdOn(now)
                 .build();
-        eventRepository.save(unlimitedEvent);
+        entityManager.persist(unlimitedEvent);
+        entityManager.flush();
 
         Boolean onlyAvailable = true;
 
@@ -338,6 +352,7 @@ class RepositoryIntegrationTest {
                 .build();
 
         ParticipationRequest savedRequest = requestRepository.save(request);
+        entityManager.flush();
 
         Optional<ParticipationRequest> foundRequestOpt = requestRepository.findById(savedRequest.getId());
         assertTrue(foundRequestOpt.isPresent());
@@ -356,7 +371,7 @@ class RepositoryIntegrationTest {
                 .status(RequestStatus.PENDING)
                 .created(now)
                 .build();
-        requestRepository.save(request1);
+        entityManager.persist(request1);
 
         ParticipationRequest request2 = ParticipationRequest.builder()
                 .event(event3)
@@ -364,7 +379,8 @@ class RepositoryIntegrationTest {
                 .status(RequestStatus.CONFIRMED)
                 .created(now.minusHours(1))
                 .build();
-        requestRepository.save(request2);
+        entityManager.persist(request2);
+        entityManager.flush();
 
         List<ParticipationRequest> requests = requestRepository.findByRequesterId(user2.getId());
 
@@ -380,7 +396,8 @@ class RepositoryIntegrationTest {
                 .status(RequestStatus.PENDING)
                 .created(now)
                 .build();
-        requestRepository.save(request1);
+        entityManager.persist(request1);
+        entityManager.flush();
 
         List<ParticipationRequest> requests = requestRepository.findByEventId(event1.getId());
 
@@ -397,7 +414,7 @@ class RepositoryIntegrationTest {
                 .status(RequestStatus.PENDING)
                 .created(now)
                 .build();
-        requestRepository.save(request1);
+        entityManager.persist(request1);
 
         ParticipationRequest request2 = ParticipationRequest.builder()
                 .event(event1)
@@ -405,7 +422,8 @@ class RepositoryIntegrationTest {
                 .status(RequestStatus.CONFIRMED)
                 .created(now.minusHours(1))
                 .build();
-        requestRepository.save(request2);
+        entityManager.persist(request2);
+        entityManager.flush();
 
         List<ParticipationRequest> pendingRequests = requestRepository.findByEventIdAndStatus(
                 event1.getId(), RequestStatus.PENDING);
@@ -427,7 +445,8 @@ class RepositoryIntegrationTest {
                 .status(RequestStatus.PENDING)
                 .created(now)
                 .build();
-        requestRepository.save(request);
+        entityManager.persist(request);
+        entityManager.flush();
 
         Optional<ParticipationRequest> foundRequest = requestRepository.findByEventIdAndRequesterId(event1.getId(), user2.getId());
 
@@ -444,7 +463,7 @@ class RepositoryIntegrationTest {
                 .status(RequestStatus.CONFIRMED)
                 .created(now)
                 .build();
-        requestRepository.save(request1);
+        entityManager.persist(request1);
 
         ParticipationRequest request2 = ParticipationRequest.builder()
                 .event(event1)
@@ -452,7 +471,7 @@ class RepositoryIntegrationTest {
                 .status(RequestStatus.CONFIRMED)
                 .created(now.minusHours(1))
                 .build();
-        requestRepository.save(request2);
+        entityManager.persist(request2);
 
         ParticipationRequest request3 = ParticipationRequest.builder()
                 .event(event1)
@@ -460,7 +479,8 @@ class RepositoryIntegrationTest {
                 .status(RequestStatus.PENDING)
                 .created(now.minusHours(2))
                 .build();
-        requestRepository.save(request3);
+        entityManager.persist(request3);
+        entityManager.flush();
 
         Long confirmedCount = requestRepository.countByEventIdAndStatus(event1.getId(), RequestStatus.CONFIRMED);
         Long pendingCount = requestRepository.countByEventIdAndStatus(event1.getId(), RequestStatus.PENDING);
@@ -478,6 +498,7 @@ class RepositoryIntegrationTest {
                 .build();
 
         Compilation savedCompilation = compilationRepository.save(compilation);
+        entityManager.flush();
 
         Optional<Compilation> foundCompilationOpt = compilationRepository.findById(savedCompilation.getId());
         assertTrue(foundCompilationOpt.isPresent());
@@ -495,14 +516,15 @@ class RepositoryIntegrationTest {
                 .pinned(true)
                 .title("Pinned Compilation")
                 .build();
-        compilationRepository.save(pinnedCompilation);
+        entityManager.persist(pinnedCompilation);
 
         Compilation notPinnedCompilation = Compilation.builder()
                 .events(java.util.Set.of())
                 .pinned(false)
                 .title("Not Pinned Compilation")
                 .build();
-        compilationRepository.save(notPinnedCompilation);
+        entityManager.persist(notPinnedCompilation);
+        entityManager.flush();
 
         List<Compilation> pinnedCompilations = compilationRepository.findByPinned(
                 true, PageRequest.of(0, 10));
@@ -523,14 +545,15 @@ class RepositoryIntegrationTest {
                 .pinned(true)
                 .title("Compilation 1")
                 .build();
-        compilationRepository.save(compilation1);
+        entityManager.persist(compilation1);
 
         Compilation compilation2 = Compilation.builder()
                 .events(java.util.Set.of())
                 .pinned(false)
                 .title("Compilation 2")
                 .build();
-        compilationRepository.save(compilation2);
+        entityManager.persist(compilation2);
+        entityManager.flush();
 
         List<Compilation> compilations = compilationRepository.findAll();
 
@@ -608,6 +631,7 @@ class RepositoryIntegrationTest {
     void userRepository_deleteById_shouldWork() {
         Long userId = user1.getId();
         userRepository.deleteById(userId);
+        entityManager.flush();
 
         Optional<User> deletedUser = userRepository.findById(userId);
         assertFalse(deletedUser.isPresent());
@@ -617,6 +641,7 @@ class RepositoryIntegrationTest {
     void categoryRepository_deleteById_shouldWork() {
         Long categoryId = category1.getId();
         categoryRepository.deleteById(categoryId);
+        entityManager.flush();
 
         Optional<Category> deletedCategory = categoryRepository.findById(categoryId);
         assertFalse(deletedCategory.isPresent());
@@ -626,6 +651,7 @@ class RepositoryIntegrationTest {
     void eventRepository_deleteById_shouldWork() {
         Long eventId = event1.getId();
         eventRepository.deleteById(eventId);
+        entityManager.flush();
 
         Optional<Event> deletedEvent = eventRepository.findById(eventId);
         assertFalse(deletedEvent.isPresent());
@@ -638,10 +664,12 @@ class RepositoryIntegrationTest {
                 .pinned(true)
                 .title("To Delete")
                 .build();
-        compilation = compilationRepository.save(compilation);
+        entityManager.persist(compilation);
+        entityManager.flush();
 
         Long compilationId = compilation.getId();
         compilationRepository.deleteById(compilationId);
+        entityManager.flush();
 
         Optional<Compilation> deletedCompilation = compilationRepository.findById(compilationId);
         assertFalse(deletedCompilation.isPresent());

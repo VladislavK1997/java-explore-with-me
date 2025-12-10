@@ -48,15 +48,8 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        LocalDateTime start = null;
-        LocalDateTime end = null;
-
-        try {
-            start = parseDateTime(rangeStart);
-            end = parseDateTime(rangeEnd);
-        } catch (ValidationException e) {
-            throw e;
-        }
+        LocalDateTime start = parseDateTime(rangeStart);
+        LocalDateTime end = parseDateTime(rangeEnd);
 
         List<Event> events = eventRepository.findEventsByAdmin(users, eventStates, categories, start, end, page);
 
@@ -102,12 +95,8 @@ public class EventServiceImpl implements EventService {
         }
 
         if (updateRequest.getEventDate() != null) {
-            try {
-                LocalDateTime newEventDate = parseDateTime(updateRequest.getEventDate().toString());
-                event.setEventDate(newEventDate);
-            } catch (ValidationException e) {
-                throw e;
-            }
+            LocalDateTime newEventDate = updateRequest.getEventDate();
+            event.setEventDate(newEventDate);
         }
 
         updateEventFields(event, updateRequest);
@@ -194,14 +183,10 @@ public class EventServiceImpl implements EventService {
         }
 
         if (updateRequest.getEventDate() != null) {
-            try {
-                if (updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-                    throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + updateRequest.getEventDate());
-                }
-                event.setEventDate(updateRequest.getEventDate());
-            } catch (DateTimeParseException e) {
-                throw new ValidationException("Invalid date format: " + updateRequest.getEventDate());
+            if (updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+                throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + updateRequest.getEventDate());
             }
+            event.setEventDate(updateRequest.getEventDate());
         }
 
         updateEventFields(event, updateRequest);
@@ -220,11 +205,11 @@ public class EventServiceImpl implements EventService {
         validatePagination(from, size);
 
         if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
-            throw new ValidationException("Invalid sort parameter: " + sort);
+            throw new IllegalArgumentException("Invalid sort parameter: " + sort);
         }
 
         if (text != null && text.length() > 7000) {
-            throw new ValidationException("Text parameter is too long");
+            throw new IllegalArgumentException("Text parameter is too long");
         }
 
         statsService.saveHit("/events", ip);
@@ -238,15 +223,8 @@ public class EventServiceImpl implements EventService {
             page = PageRequest.of(from / size, size);
         }
 
-        LocalDateTime start = null;
-        LocalDateTime end = null;
-
-        try {
-            start = parseDateTime(rangeStart);
-            end = parseDateTime(rangeEnd);
-        } catch (ValidationException e) {
-            throw e;
-        }
+        LocalDateTime start = parseDateTime(rangeStart);
+        LocalDateTime end = parseDateTime(rangeEnd);
 
         if (start == null) {
             start = LocalDateTime.now();
@@ -295,22 +273,24 @@ public class EventServiceImpl implements EventService {
         }
 
         try {
+            // Сначала пробуем ISO формат
             return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         } catch (DateTimeParseException e1) {
             try {
+                // Потом пробуем кастомный формат
                 return LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             } catch (DateTimeParseException e2) {
-                throw new ValidationException("Invalid date format: " + dateTime);
+                throw new IllegalArgumentException("Invalid date format: " + dateTime);
             }
         }
     }
 
     private void validatePagination(Integer from, Integer size) {
         if (from < 0) {
-            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+            throw new IllegalArgumentException("Parameter 'from' must be greater than or equal to 0");
         }
         if (size <= 0) {
-            throw new ValidationException("Parameter 'size' must be greater than 0");
+            throw new IllegalArgumentException("Parameter 'size' must be greater than 0");
         }
     }
 

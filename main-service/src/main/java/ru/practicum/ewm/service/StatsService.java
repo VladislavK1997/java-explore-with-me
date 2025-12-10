@@ -46,22 +46,23 @@ public class StatsService {
             List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, true);
 
             Map<Long, Long> viewsMap = new HashMap<>();
-
             eventIds.forEach(id -> viewsMap.put(id, 0L));
 
             for (ViewStatsDto stat : stats) {
                 String uri = stat.getUri();
                 if (uri.startsWith("/events/")) {
-                    String[] parts = uri.split("/");
-                    if (parts.length > 2) {
-                        try {
-                            Long eventId = Long.parseLong(parts[2]);
-                            if (eventIds.contains(eventId)) {
+                    try {
+                        String idStr = uri.substring("/events/".length());
+                        Long eventId = Long.parseLong(idStr);
+                        if (eventIds.contains(eventId)) {
+                            // Берем максимальное значение
+                            Long currentViews = viewsMap.get(eventId);
+                            if (stat.getHits() > currentViews) {
                                 viewsMap.put(eventId, stat.getHits());
                             }
-                        } catch (NumberFormatException e) {
-                            log.debug("Invalid event ID in URI: {}", uri);
                         }
+                    } catch (NumberFormatException e) {
+                        log.debug("Invalid event ID in URI: {}", uri);
                     }
                 }
             }
