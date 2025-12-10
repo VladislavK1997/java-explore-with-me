@@ -53,7 +53,7 @@ public class StatsService {
                 if (uri.startsWith("/events/")) {
                     try {
                         Long eventId = Long.parseLong(uri.substring("/events/".length()));
-                        viewsMap.put(eventId, stat.getHits());
+                        viewsMap.merge(eventId, stat.getHits(), Long::sum);
                     } catch (NumberFormatException e) {
                         log.warn("Invalid event ID in URI: {}", uri);
                     }

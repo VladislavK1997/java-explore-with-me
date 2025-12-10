@@ -31,7 +31,7 @@ public class CompilationServiceImpl implements CompilationService {
     @Transactional
     public CompilationDto createCompilation(NewCompilationDto newCompilationDto) {
         Set<Event> events = new HashSet<>();
-        if (newCompilationDto.getEvents() != null && !newCompilationDto.getEvents().isEmpty()) {
+        if (newCompilationDto.getEvents() != null) {
             events = new HashSet<>(eventRepository.findByIdIn(newCompilationDto.getEvents()));
         }
 
@@ -43,7 +43,7 @@ public class CompilationServiceImpl implements CompilationService {
 
         Compilation savedCompilation = compilationRepository.save(compilation);
 
-        if (savedCompilation.getEvents() != null && !savedCompilation.getEvents().isEmpty()) {
+        if (!savedCompilation.getEvents().isEmpty()) {
             List<Long> eventIds = savedCompilation.getEvents().stream()
                     .map(Event::getId)
                     .collect(Collectors.toList());
@@ -82,7 +82,7 @@ public class CompilationServiceImpl implements CompilationService {
 
         Compilation updatedCompilation = compilationRepository.save(compilation);
 
-        if (updatedCompilation.getEvents() != null && !updatedCompilation.getEvents().isEmpty()) {
+        if (!updatedCompilation.getEvents().isEmpty()) {
             List<Long> eventIds = updatedCompilation.getEvents().stream()
                     .map(Event::getId)
                     .collect(Collectors.toList());
@@ -105,7 +105,7 @@ public class CompilationServiceImpl implements CompilationService {
         }
 
         compilations.forEach(compilation -> {
-            if (compilation.getEvents() != null && !compilation.getEvents().isEmpty()) {
+            if (!compilation.getEvents().isEmpty()) {
                 List<Long> eventIds = compilation.getEvents().stream()
                         .map(Event::getId)
                         .collect(Collectors.toList());
@@ -124,7 +124,7 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation compilation = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Compilation with id=" + compId + " was not found"));
 
-        if (compilation.getEvents() != null && !compilation.getEvents().isEmpty()) {
+        if (!compilation.getEvents().isEmpty()) {
             List<Long> eventIds = compilation.getEvents().stream()
                     .map(Event::getId)
                     .collect(Collectors.toList());

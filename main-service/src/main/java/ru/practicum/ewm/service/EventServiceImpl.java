@@ -191,6 +191,10 @@ public class EventServiceImpl implements EventService {
                                                String sort, Integer from, Integer size, String ip) {
         statsService.saveHit("/events", ip);
 
+        if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
+            throw new ValidationException("Invalid sort parameter: " + sort);
+        }
+
         PageRequest page;
         if ("EVENT_DATE".equals(sort)) {
             page = PageRequest.of(from / size, size, Sort.by("eventDate").descending());

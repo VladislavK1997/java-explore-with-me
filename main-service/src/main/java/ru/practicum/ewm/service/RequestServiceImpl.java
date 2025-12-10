@@ -87,10 +87,12 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException("Request with id=" + requestId + " was not found");
         }
 
+        boolean wasConfirmed = request.getStatus() == RequestStatus.CONFIRMED;
+
         request.setStatus(RequestStatus.CANCELED);
         ParticipationRequest updatedRequest = requestRepository.save(request);
 
-        if (request.getStatus() == RequestStatus.CONFIRMED) {
+        if (wasConfirmed) {
             Event event = request.getEvent();
             event.setConfirmedRequests(event.getConfirmedRequests() - 1);
             eventRepository.save(event);
@@ -125,7 +127,7 @@ public class RequestServiceImpl implements RequestService {
         }
 
         if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
-            throw new ConflictException("Event does not require moderation");
+            return new EventRequestStatusUpdateResult(List.of(), List.of());
         }
 
         List<ParticipationRequest> requests = requestRepository.findAllById(updateRequest.getRequestIds());
