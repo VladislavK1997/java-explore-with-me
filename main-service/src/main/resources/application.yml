@@ -22,3 +22,10 @@ server:
 stats:
   server:
     url: http://localhost:9090
+
+logging:
+  level:
+    ru.practicum.ewm: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN

@@ -128,7 +128,11 @@ public class RequestServiceImpl implements RequestService {
 
         if (updateRequest.getStatus() == null ||
                 (!updateRequest.getStatus().equals("CONFIRMED") && !updateRequest.getStatus().equals("REJECTED"))) {
-            throw new ValidationException("Invalid status value: " + updateRequest.getStatus());
+            throw new ConflictException("Invalid status value: " + updateRequest.getStatus());
+        }
+
+        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+            throw new ConflictException("Event does not require moderation");
         }
 
         List<ParticipationRequest> requests = requestRepository.findAllById(updateRequest.getRequestIds());
