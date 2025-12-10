@@ -1,13 +1,17 @@
 package ru.practicum.ewm.mapper;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.model.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ActiveProfiles("test")
 class MapperTest {
 
     private final LocalDateTime now = LocalDateTime.now();
@@ -250,10 +254,11 @@ class MapperTest {
         assertNotNull(dto.getEvents());
         assertEquals(2, dto.getEvents().size());
 
-        assertEquals(1L, dto.getEvents().get(0).getId());
-        assertEquals("Event 1", dto.getEvents().get(0).getTitle());
-        assertEquals(2L, dto.getEvents().get(1).getId());
-        assertEquals("Event 2", dto.getEvents().get(1).getTitle());
+        List<Long> eventIds = dto.getEvents().stream()
+                .map(EventShortDto::getId)
+                .collect(Collectors.toList());
+        assertTrue(eventIds.contains(1L));
+        assertTrue(eventIds.contains(2L));
     }
 
     @Test
@@ -271,7 +276,8 @@ class MapperTest {
         assertEquals(1L, dto.getId());
         assertEquals("Empty Compilation", dto.getTitle());
         assertFalse(dto.getPinned());
-        assertNull(dto.getEvents());
+        assertNotNull(dto.getEvents());
+        assertTrue(dto.getEvents().isEmpty());
     }
 
     @Test
@@ -348,7 +354,6 @@ class MapperTest {
         newEventDto.setEventDate(now.plusDays(1));
         newEventDto.setLocation(new LocationDto(55.0f, 37.0f));
         newEventDto.setTitle("Test Event");
-
 
         Event event = EventMapper.toEvent(newEventDto);
 

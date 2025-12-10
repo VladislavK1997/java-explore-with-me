@@ -51,15 +51,17 @@ public class StatsService {
 
             for (ViewStatsDto stat : stats) {
                 String uri = stat.getUri();
-                if (uri.startsWith("/events/") && uri.length() > "/events/".length()) {
-                    try {
-                        String idStr = uri.substring("/events/".length());
-                        Long eventId = Long.parseLong(idStr);
-                        if (eventIds.contains(eventId)) {
-                            viewsMap.put(eventId, stat.getHits());
+                if (uri.startsWith("/events/")) {
+                    String[] parts = uri.split("/");
+                    if (parts.length > 2) {
+                        try {
+                            Long eventId = Long.parseLong(parts[2]);
+                            if (eventIds.contains(eventId)) {
+                                viewsMap.put(eventId, stat.getHits());
+                            }
+                        } catch (NumberFormatException e) {
+                            log.debug("Invalid event ID in URI: {}", uri);
                         }
-                    } catch (NumberFormatException e) {
-                        log.debug("Invalid event ID in URI: {}", uri);
                     }
                 }
             }

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.ewm.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.ewm.dto.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.dto.ParticipationRequestDto;
@@ -24,6 +25,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 class RequestServiceImplTest {
 
@@ -676,7 +678,6 @@ class RequestServiceImplTest {
 
     @Test
     void updateRequestStatus_NoModerationRequired_ThrowsConflictException() {
-        // Given
         Long userId = 1L;
         Long eventId = 10L;
 
@@ -685,7 +686,7 @@ class RequestServiceImplTest {
                 .id(eventId)
                 .title("Test Event")
                 .initiator(initiator)
-                .participantLimit(0) // Нет лимита - не требуется модерация
+                .participantLimit(0)
                 .requestModeration(false)
                 .build();
 
@@ -693,7 +694,6 @@ class RequestServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
 
-        // When & Then
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> requestService.updateRequestStatus(userId, eventId, updateRequest));
         assertEquals("Event does not require moderation", exception.getMessage());

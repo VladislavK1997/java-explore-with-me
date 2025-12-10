@@ -55,7 +55,7 @@ public class EventServiceImpl implements EventService {
             start = parseDateTime(rangeStart);
             end = parseDateTime(rangeEnd);
         } catch (ValidationException e) {
-            throw e; // Пробрасываем дальше для обработки в ErrorHandler
+            throw e;
         }
 
         List<Event> events = eventRepository.findEventsByAdmin(users, eventStates, categories, start, end, page);
@@ -141,15 +141,15 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
-        if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + newEventDto.getEventDate());
-        }
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
 
         Category category = categoryRepository.findById(newEventDto.getCategory())
                 .orElseThrow(() -> new NotFoundException("Category with id=" + newEventDto.getCategory() + " was not found"));
+
+        if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
+            throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + newEventDto.getEventDate());
+        }
 
         Event event = EventMapper.toEvent(newEventDto);
         event.setInitiator(user);

@@ -115,7 +115,6 @@
             <artifactId>junit-platform-launcher</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- =========================== -->
     </dependencies>
 
     <build>
@@ -124,11 +123,10 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>ru.practicum.ewm.EwmApplication</mainClass>
+                    <mainClass>ru.practicum.ewm.MainServiceApplication</mainClass>
                 </configuration>
             </plugin>
 
-            <!-- Плагин для компиляции с Java 21 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -145,7 +143,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Плагин для запуска тестов -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -156,9 +153,6 @@
                         <include>**/*Test.java</include>
                         <include>**/*Tests.java</include>
                     </includes>
-                    <systemPropertyVariables>
-                        <spring.profiles.active>test</spring.profiles.active>
-                    </systemPropertyVariables>
                 </configuration>
             </plugin>
         </plugins>

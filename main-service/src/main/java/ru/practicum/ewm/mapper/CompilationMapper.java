@@ -23,7 +23,7 @@ public class CompilationMapper {
         }
 
         return new CompilationDto(
-                events.isEmpty() ? null : events,
+                events,
                 compilation.getId(),
                 compilation.getPinned(),
                 compilation.getTitle()
