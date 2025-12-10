@@ -22,41 +22,48 @@ public class EventMapper {
                 .title(newEventDto.getTitle())
                 .state(EventState.PENDING)
                 .createdOn(LocalDateTime.now())
+                .confirmedRequests(0)
                 .build();
     }
 
     public static EventFullDto toEventFullDto(Event event) {
+        if (event == null) {
+            return null;
+        }
         return new EventFullDto(
                 event.getId(),
                 event.getAnnotation(),
-                CategoryMapper.toCategoryDto(event.getCategory()),
-                event.getConfirmedRequests().longValue(),
+                event.getCategory() != null ? CategoryMapper.toCategoryDto(event.getCategory()) : null,
+                event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L,
                 event.getCreatedOn(),
                 event.getDescription(),
                 event.getEventDate(),
-                new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()),
-                new LocationDto(event.getLocation().getLat(), event.getLocation().getLon()),
+                event.getInitiator() != null ? new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()) : null,
+                event.getLocation() != null ? new LocationDto(event.getLocation().getLat(), event.getLocation().getLon()) : null,
                 event.getPaid(),
                 event.getParticipantLimit(),
                 event.getPublishedOn(),
                 event.getRequestModeration(),
                 event.getState(),
                 event.getTitle(),
-                event.getViews()
+                event.getViews() != null ? event.getViews() : 0L
         );
     }
 
     public static EventShortDto toEventShortDto(Event event) {
+        if (event == null) {
+            return null;
+        }
         return new EventShortDto(
                 event.getId(),
                 event.getAnnotation(),
-                CategoryMapper.toCategoryDto(event.getCategory()),
-                event.getConfirmedRequests().longValue(),
+                event.getCategory() != null ? CategoryMapper.toCategoryDto(event.getCategory()) : null,
+                event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L,
                 event.getEventDate(),
-                new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()),
+                event.getInitiator() != null ? new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()) : null,
                 event.getPaid(),
                 event.getTitle(),
-                event.getViews()
+                event.getViews() != null ? event.getViews() : 0L
         );
     }
 }

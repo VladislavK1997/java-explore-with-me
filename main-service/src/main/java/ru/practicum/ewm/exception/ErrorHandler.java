@@ -84,7 +84,8 @@ public class ErrorHandler {
         );
     }
 
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class,
+    @ExceptionHandler({IllegalArgumentException.class,
+            MethodArgumentTypeMismatchException.class,
             MissingServletRequestParameterException.class,
             DateTimeParseException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)

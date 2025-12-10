@@ -12,6 +12,7 @@ import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

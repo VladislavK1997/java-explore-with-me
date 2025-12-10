@@ -16,6 +16,7 @@ import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,8 +44,8 @@ public class EventServiceImpl implements EventService {
                     .collect(Collectors.toList());
         }
 
-        LocalDateTime start = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : null;
-        LocalDateTime end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
+        LocalDateTime start = parseDateTime(rangeStart);
+        LocalDateTime end = parseDateTime(rangeEnd);
 
         List<Event> events = eventRepository.findEventsByAdmin(users, eventStates, categories, start, end, page);
 
@@ -131,7 +132,6 @@ public class EventServiceImpl implements EventService {
         Event event = EventMapper.toEvent(newEventDto);
         event.setInitiator(user);
         event.setCategory(category);
-        event.setConfirmedRequests(0);
 
         Event savedEvent = eventRepository.save(event);
         return EventMapper.toEventFullDto(savedEvent);
@@ -200,8 +200,11 @@ public class EventServiceImpl implements EventService {
             page = PageRequest.of(from / size, size);
         }
 
-        LocalDateTime start = rangeStart != null ? LocalDateTime.parse(rangeStart, FORMATTER) : LocalDateTime.now();
-        LocalDateTime end = rangeEnd != null ? LocalDateTime.parse(rangeEnd, FORMATTER) : null;
+        LocalDateTime start = parseDateTime(rangeStart);
+        if (start == null) {
+            start = LocalDateTime.now();
+        }
+        LocalDateTime end = parseDateTime(rangeEnd);
 
         List<Event> events = eventRepository.findEventsPublic(text, categories, paid, start, end, onlyAvailable, page);
 
@@ -238,6 +241,21 @@ public class EventServiceImpl implements EventService {
         event.setViews(views);
 
         return EventMapper.toEventFullDto(event);
+    }
+
+    private LocalDateTime parseDateTime(String dateTime) {
+        if (dateTime == null) {
+            return null;
+        }
+        try {
+            return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (DateTimeParseException e) {
+            try {
+                return LocalDateTime.parse(dateTime, FORMATTER);
+            } catch (DateTimeParseException e2) {
+                throw new ValidationException("Invalid date format: " + dateTime);
+            }
+        }
     }
 
     private void updateEventFields(Event event, Object updateRequest) {
