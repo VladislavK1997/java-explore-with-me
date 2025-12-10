@@ -130,20 +130,28 @@ public class RequestServiceImpl implements RequestService {
             return new EventRequestStatusUpdateResult(List.of(), List.of());
         }
 
+        if (updateRequest.getStatus() == null ||
+                (!updateRequest.getStatus().equals("CONFIRMED") && !updateRequest.getStatus().equals("REJECTED"))) {
+            throw new ValidationException("Invalid status value: " + updateRequest.getStatus());
+        }
+
         List<ParticipationRequest> requests = requestRepository.findAllById(updateRequest.getRequestIds());
 
-        requests.forEach(request -> {
+        for (ParticipationRequest request : requests) {
+            if (!request.getEvent().getId().equals(eventId)) {
+                throw new NotFoundException("Request with id=" + request.getId() + " was not found");
+            }
             if (request.getStatus() != RequestStatus.PENDING) {
                 throw new ConflictException("Request must have status PENDING");
             }
-        });
+        }
 
         List<ParticipationRequest> confirmedRequests = new ArrayList<>();
         List<ParticipationRequest> rejectedRequests = new ArrayList<>();
 
         int availableSlots = event.getParticipantLimit() - event.getConfirmedRequests();
 
-        if (availableSlots <= 0) {
+        if ("CONFIRMED".equals(updateRequest.getStatus()) && availableSlots <= 0) {
             throw new ConflictException("The participant limit has been reached");
         }
 
@@ -152,7 +160,6 @@ public class RequestServiceImpl implements RequestService {
                 request.setStatus(RequestStatus.CONFIRMED);
                 confirmedRequests.add(request);
                 availableSlots--;
-                event.setConfirmedRequests(event.getConfirmedRequests() + 1);
             } else {
                 request.setStatus(RequestStatus.REJECTED);
                 rejectedRequests.add(request);
@@ -160,7 +167,11 @@ public class RequestServiceImpl implements RequestService {
         }
 
         requestRepository.saveAll(requests);
-        eventRepository.save(event);
+
+        if (!confirmedRequests.isEmpty()) {
+            event.setConfirmedRequests(event.getConfirmedRequests() + confirmedRequests.size());
+            eventRepository.save(event);
+        }
 
         return new EventRequestStatusUpdateResult(
                 confirmedRequests.stream()

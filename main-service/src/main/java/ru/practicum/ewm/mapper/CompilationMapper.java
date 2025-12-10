@@ -4,6 +4,8 @@ import lombok.experimental.UtilityClass;
 import ru.practicum.ewm.dto.CompilationDto;
 import ru.practicum.ewm.model.Compilation;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @UtilityClass
@@ -12,11 +14,18 @@ public class CompilationMapper {
         if (compilation == null) {
             return null;
         }
+
+        List<ru.practicum.ewm.dto.EventShortDto> events;
+        if (compilation.getEvents() != null && !compilation.getEvents().isEmpty()) {
+            events = compilation.getEvents().stream()
+                    .map(EventMapper::toEventShortDto)
+                    .collect(Collectors.toList());
+        } else {
+            events = Collections.emptyList();
+        }
+
         return new CompilationDto(
-                compilation.getEvents() != null && !compilation.getEvents().isEmpty() ?
-                        compilation.getEvents().stream()
-                                .map(EventMapper::toEventShortDto)
-                                .collect(Collectors.toList()) : null,
+                events,
                 compilation.getId(),
                 compilation.getPinned(),
                 compilation.getTitle()

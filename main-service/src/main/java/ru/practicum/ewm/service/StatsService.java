@@ -9,9 +9,7 @@ import ru.practicum.ewm.stat.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -45,25 +43,31 @@ public class StatsService {
         LocalDateTime end = LocalDateTime.now().plusDays(1);
 
         try {
-            List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, false);
+            List<ViewStatsDto> stats = statsClient.getStats(start, end, uris, true); // true для уникальных просмотров
 
             Map<Long, Long> viewsMap = new HashMap<>();
-            stats.forEach(stat -> {
+
+            for (Long eventId : eventIds) {
+                viewsMap.put(eventId, 0L);
+            }
+
+            for (ViewStatsDto stat : stats) {
                 String uri = stat.getUri();
                 if (uri.startsWith("/events/")) {
                     try {
                         Long eventId = Long.parseLong(uri.substring("/events/".length()));
+                        // Суммируем hits для одного и того же события
                         viewsMap.merge(eventId, stat.getHits(), Long::sum);
                     } catch (NumberFormatException e) {
                         log.warn("Invalid event ID in URI: {}", uri);
                     }
                 }
-            });
+            }
 
             return viewsMap;
         } catch (Exception e) {
             log.error("Failed to get views statistics", e);
-            return new HashMap<>();
+            return eventIds.stream().collect(Collectors.toMap(id -> id, id -> 0L));
         }
     }
 }

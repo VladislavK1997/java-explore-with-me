@@ -74,7 +74,7 @@ class PublicCompilationControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Summer Events"))
                 .andExpect(jsonPath("$[0].pinned").value(true));
 
-        verify(compilationService, times(1)).getCompilations(true, 0, 10);
+        verify(compilationService, times(1)).getCompilations(eq(true), eq(0), eq(10));
     }
 
     @Test
@@ -90,7 +90,7 @@ class PublicCompilationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        verify(compilationService, times(1)).getCompilations(isNull(), 0, 10);
+        verify(compilationService, times(1)).getCompilations(isNull(), eq(0), eq(10));
     }
 
     @Test
@@ -104,7 +104,7 @@ class PublicCompilationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        verify(compilationService, times(1)).getCompilations(isNull(), 0, 10);
+        verify(compilationService, times(1)).getCompilations(isNull(), eq(0), eq(10));
     }
 
     @Test

@@ -1,26 +1,33 @@
 package ru.practicum.ewm.repository;
 
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import ru.practicum.ewm.model.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@ActiveProfiles("test")
 @TestPropertySource(properties = {
         "spring.datasource.driver-class-name=org.h2.Driver",
-        "spring.datasource.url=jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
+        "spring.datasource.url=jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;NON_KEYWORDS=USER,YEAR",
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
-        "spring.jpa.hibernate.ddl-auto=create-drop"
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.show-sql=false",
+        "spring.jpa.properties.hibernate.format_sql=false",
+        "spring.jpa.properties.hibernate.jdbc.batch_size=20",
+        "spring.jpa.properties.hibernate.order_inserts=true",
+        "spring.jpa.properties.hibernate.order_updates=true"
 })
 class RepositoryIntegrationTest {
 
@@ -57,23 +64,27 @@ class RepositoryIntegrationTest {
                 .name("John Doe")
                 .email("john@example.com")
                 .build();
-        user1 = entityManager.persist(user1);
+        entityManager.persist(user1);
+        entityManager.flush();
 
         user2 = User.builder()
                 .name("Jane Smith")
                 .email("jane@example.com")
                 .build();
-        user2 = entityManager.persist(user2);
+        entityManager.persist(user2);
+        entityManager.flush();
 
         category1 = Category.builder()
                 .name("Concerts")
                 .build();
-        category1 = entityManager.persist(category1);
+        entityManager.persist(category1);
+        entityManager.flush();
 
         category2 = Category.builder()
                 .name("Theater")
                 .build();
-        category2 = entityManager.persist(category2);
+        entityManager.persist(category2);
+        entityManager.flush();
 
         event1 = Event.builder()
                 .title("Rock Concert")
@@ -91,7 +102,8 @@ class RepositoryIntegrationTest {
                 .createdOn(now.minusDays(1))
                 .publishedOn(now.minusHours(1))
                 .build();
-        event1 = entityManager.persist(event1);
+        entityManager.persist(event1);
+        entityManager.flush();
 
         event2 = Event.builder()
                 .title("Theater Play")
@@ -108,7 +120,8 @@ class RepositoryIntegrationTest {
                 .confirmedRequests(10)
                 .createdOn(now.minusDays(1))
                 .build();
-        event2 = entityManager.persist(event2);
+        entityManager.persist(event2);
+        entityManager.flush();
 
         event3 = Event.builder()
                 .title("Jazz Concert")
@@ -125,7 +138,8 @@ class RepositoryIntegrationTest {
                 .confirmedRequests(0)
                 .createdOn(now.minusDays(2))
                 .build();
-        event3 = entityManager.persist(event3);
+        entityManager.persist(event3);
+        entityManager.flush();
     }
 
     @Test
@@ -136,9 +150,13 @@ class RepositoryIntegrationTest {
                 .build();
 
         User savedUser = userRepository.save(newUser);
-        User foundUser = userRepository.findById(savedUser.getId()).orElse(null);
+        entityManager.flush();
+        entityManager.clear();
 
-        assertNotNull(foundUser);
+        Optional<User> foundUserOpt = userRepository.findById(savedUser.getId());
+        assertTrue(foundUserOpt.isPresent());
+
+        User foundUser = foundUserOpt.get();
         assertEquals("Test User", foundUser.getName());
         assertEquals("test@example.com", foundUser.getEmail());
     }
@@ -170,6 +188,9 @@ class RepositoryIntegrationTest {
                 .build();
 
         Category savedCategory = categoryRepository.save(newCategory);
+        entityManager.flush();
+        entityManager.clear();
+
         Category foundCategory = categoryRepository.findById(savedCategory.getId()).orElse(null);
 
         assertNotNull(foundCategory);
@@ -195,7 +216,7 @@ class RepositoryIntegrationTest {
 
     @Test
     void eventRepository_findByIdAndInitiatorId_shouldReturnSpecificEvent() {
-        var foundEvent = eventRepository.findByIdAndInitiatorId(event1.getId(), user1.getId());
+        Optional<Event> foundEvent = eventRepository.findByIdAndInitiatorId(event1.getId(), user1.getId());
 
         assertTrue(foundEvent.isPresent());
         assertEquals("Rock Concert", foundEvent.get().getTitle());
@@ -204,15 +225,15 @@ class RepositoryIntegrationTest {
 
     @Test
     void eventRepository_findByIdAndInitiatorId_withWrongInitiator_shouldReturnEmpty() {
-        var foundEvent = eventRepository.findByIdAndInitiatorId(event1.getId(), user2.getId());
+        Optional<Event> foundEvent = eventRepository.findByIdAndInitiatorId(event1.getId(), user2.getId());
 
-        assertTrue(foundEvent.isEmpty());
+        assertFalse(foundEvent.isPresent());
     }
 
     @Test
     void eventRepository_findEventsByAdmin_withAllFilters_shouldReturnFilteredEvents() {
         List<Long> users = List.of(user1.getId());
-        List<ru.practicum.ewm.model.EventState> states = List.of(EventState.PUBLISHED);
+        List<EventState> states = List.of(EventState.PUBLISHED);
         List<Long> categories = List.of(category1.getId());
         LocalDateTime rangeStart = now.minusDays(3);
         LocalDateTime rangeEnd = now.plusDays(5);
@@ -268,6 +289,7 @@ class RepositoryIntegrationTest {
                 .createdOn(now)
                 .build();
         entityManager.persist(fullEvent);
+        entityManager.flush();
 
         Boolean onlyAvailable = true;
 
@@ -296,6 +318,7 @@ class RepositoryIntegrationTest {
                 .createdOn(now)
                 .build();
         entityManager.persist(unlimitedEvent);
+        entityManager.flush();
 
         Boolean onlyAvailable = true;
 
@@ -328,9 +351,13 @@ class RepositoryIntegrationTest {
                 .build();
 
         ParticipationRequest savedRequest = requestRepository.save(request);
-        ParticipationRequest foundRequest = requestRepository.findById(savedRequest.getId()).orElse(null);
+        entityManager.flush();
+        entityManager.clear();
 
-        assertNotNull(foundRequest);
+        Optional<ParticipationRequest> foundRequestOpt = requestRepository.findById(savedRequest.getId());
+        assertTrue(foundRequestOpt.isPresent());
+
+        ParticipationRequest foundRequest = foundRequestOpt.get();
         assertEquals(event1.getId(), foundRequest.getEvent().getId());
         assertEquals(user2.getId(), foundRequest.getRequester().getId());
         assertEquals(RequestStatus.PENDING, foundRequest.getStatus());
@@ -353,6 +380,7 @@ class RepositoryIntegrationTest {
                 .created(now.minusHours(1))
                 .build();
         entityManager.persist(request2);
+        entityManager.flush();
 
         List<ParticipationRequest> requests = requestRepository.findByRequesterId(user2.getId());
 
@@ -369,6 +397,7 @@ class RepositoryIntegrationTest {
                 .created(now)
                 .build();
         entityManager.persist(request1);
+        entityManager.flush();
 
         List<ParticipationRequest> requests = requestRepository.findByEventId(event1.getId());
 
@@ -394,6 +423,7 @@ class RepositoryIntegrationTest {
                 .created(now.minusHours(1))
                 .build();
         entityManager.persist(request2);
+        entityManager.flush();
 
         List<ParticipationRequest> pendingRequests = requestRepository.findByEventIdAndStatus(
                 event1.getId(), RequestStatus.PENDING);
@@ -416,8 +446,9 @@ class RepositoryIntegrationTest {
                 .created(now)
                 .build();
         entityManager.persist(request);
+        entityManager.flush();
 
-        var foundRequest = requestRepository.findByEventIdAndRequesterId(event1.getId(), user2.getId());
+        Optional<ParticipationRequest> foundRequest = requestRepository.findByEventIdAndRequesterId(event1.getId(), user2.getId());
 
         assertTrue(foundRequest.isPresent());
         assertEquals(event1.getId(), foundRequest.get().getEvent().getId());
@@ -444,11 +475,12 @@ class RepositoryIntegrationTest {
 
         ParticipationRequest request3 = ParticipationRequest.builder()
                 .event(event1)
-                .requester(new User())
+                .requester(User.builder().id(999L).name("Test").build())
                 .status(RequestStatus.PENDING)
                 .created(now.minusHours(2))
                 .build();
         entityManager.persist(request3);
+        entityManager.flush();
 
         Long confirmedCount = requestRepository.countByEventIdAndStatus(event1.getId(), RequestStatus.CONFIRMED);
         Long pendingCount = requestRepository.countByEventIdAndStatus(event1.getId(), RequestStatus.PENDING);
@@ -460,15 +492,19 @@ class RepositoryIntegrationTest {
     @Test
     void compilationRepository_saveAndFind_shouldWork() {
         Compilation compilation = Compilation.builder()
-                .events(new java.util.HashSet<>(List.of(event1, event2)))
+                .events(java.util.Set.of(event1, event2))
                 .pinned(true)
                 .title("Test Compilation")
                 .build();
 
         Compilation savedCompilation = compilationRepository.save(compilation);
-        Compilation foundCompilation = compilationRepository.findById(savedCompilation.getId()).orElse(null);
+        entityManager.flush();
+        entityManager.clear();
 
-        assertNotNull(foundCompilation);
+        Optional<Compilation> foundCompilationOpt = compilationRepository.findById(savedCompilation.getId());
+        assertTrue(foundCompilationOpt.isPresent());
+
+        Compilation foundCompilation = foundCompilationOpt.get();
         assertEquals("Test Compilation", foundCompilation.getTitle());
         assertTrue(foundCompilation.getPinned());
         assertEquals(2, foundCompilation.getEvents().size());
@@ -477,18 +513,19 @@ class RepositoryIntegrationTest {
     @Test
     void compilationRepository_findByPinned_shouldReturnFilteredCompilations() {
         Compilation pinnedCompilation = Compilation.builder()
-                .events(new java.util.HashSet<>())
+                .events(java.util.Set.of())
                 .pinned(true)
                 .title("Pinned Compilation")
                 .build();
         entityManager.persist(pinnedCompilation);
 
         Compilation notPinnedCompilation = Compilation.builder()
-                .events(new java.util.HashSet<>())
+                .events(java.util.Set.of())
                 .pinned(false)
                 .title("Not Pinned Compilation")
                 .build();
         entityManager.persist(notPinnedCompilation);
+        entityManager.flush();
 
         List<Compilation> pinnedCompilations = compilationRepository.findByPinned(
                 true, PageRequest.of(0, 10));
@@ -505,18 +542,19 @@ class RepositoryIntegrationTest {
     @Test
     void compilationRepository_findAll_shouldReturnAllCompilations() {
         Compilation compilation1 = Compilation.builder()
-                .events(new java.util.HashSet<>())
+                .events(java.util.Set.of())
                 .pinned(true)
                 .title("Compilation 1")
                 .build();
         entityManager.persist(compilation1);
 
         Compilation compilation2 = Compilation.builder()
-                .events(new java.util.HashSet<>())
+                .events(java.util.Set.of())
                 .pinned(false)
                 .title("Compilation 2")
                 .build();
         entityManager.persist(compilation2);
+        entityManager.flush();
 
         List<Compilation> compilations = compilationRepository.findAll();
 
@@ -576,5 +614,65 @@ class RepositoryIntegrationTest {
         assertEquals(2, events.size());
         assertTrue(events.stream().anyMatch(e -> e.getTitle().equals("Theater Play")));
         assertTrue(events.stream().anyMatch(e -> e.getTitle().equals("Jazz Concert")));
+    }
+
+    @Test
+    void eventRepository_findEventsPublic_withEmptyText_shouldReturnAllEvents() {
+        String text = "";
+        Boolean onlyAvailable = false;
+
+        List<Event> events = eventRepository.findEventsPublic(
+                text, null, null, now.minusDays(1), now.plusDays(10),
+                onlyAvailable, PageRequest.of(0, 10));
+
+        assertTrue(events.size() >= 1);
+    }
+
+    @Test
+    void userRepository_deleteById_shouldWork() {
+        Long userId = user1.getId();
+        userRepository.deleteById(userId);
+        entityManager.flush();
+
+        Optional<User> deletedUser = userRepository.findById(userId);
+        assertFalse(deletedUser.isPresent());
+    }
+
+    @Test
+    void categoryRepository_deleteById_shouldWork() {
+        Long categoryId = category1.getId();
+        categoryRepository.deleteById(categoryId);
+        entityManager.flush();
+
+        Optional<Category> deletedCategory = categoryRepository.findById(categoryId);
+        assertFalse(deletedCategory.isPresent());
+    }
+
+    @Test
+    void eventRepository_deleteById_shouldWork() {
+        Long eventId = event1.getId();
+        eventRepository.deleteById(eventId);
+        entityManager.flush();
+
+        Optional<Event> deletedEvent = eventRepository.findById(eventId);
+        assertFalse(deletedEvent.isPresent());
+    }
+
+    @Test
+    void compilationRepository_deleteById_shouldWork() {
+        Compilation compilation = Compilation.builder()
+                .events(java.util.Set.of())
+                .pinned(true)
+                .title("To Delete")
+                .build();
+        entityManager.persist(compilation);
+        entityManager.flush();
+
+        Long compilationId = compilation.getId();
+        compilationRepository.deleteById(compilationId);
+        entityManager.flush();
+
+        Optional<Compilation> deletedCompilation = compilationRepository.findById(compilationId);
+        assertFalse(deletedCompilation.isPresent());
     }
 }

@@ -1,5 +1,6 @@
 package ru.practicum.ewm.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -54,6 +55,19 @@ public class ErrorHandler {
                 e.getMessage(),
                 "For the requested operation the conditions are not met.",
                 "CONFLICT",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleConstraintViolationException(ConstraintViolationException e) {
+        log.error("Constraint violation: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                "Validation failed for some fields",
+                "Incorrectly made request.",
+                "BAD_REQUEST",
                 LocalDateTime.now()
         );
     }
