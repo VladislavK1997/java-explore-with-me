@@ -1,38 +1,29 @@
 spring:
-  application:
-    name: ewm-main-service
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/main_db
-    username: main_user
-    password: main_password
-    driver-class-name: org.postgresql.Driver
-
+  main:
+    allow-bean-definition-overriding: true
+    lazy-initialization: true
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create-drop
     show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-    open-in-view: false
-
+    database-platform: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
   jackson:
     default-property-inclusion: non_null
     serialization:
       write-dates-as-timestamps: false
     deserialization:
       fail-on-unknown-properties: false
-
-  mvc:
-    throw-exception-if-no-handler-found: true
-  web:
-    resources:
-      add-mappings: false
-
-server:
-  port: 8080
+    mapper:
+      accept-case-insensitive-enums: true
+  sql:
+    init:
+      mode: always
 
 stats:
   server:
@@ -40,8 +31,15 @@ stats:
 
 logging:
   level:
-    ru.practicum.ewm: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.validation: DEBUG
+    ru.practicum.ewm: INFO
+    org.springframework.web: INFO
+    org.springframework.validation: INFO
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
+
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+    include-exception: false

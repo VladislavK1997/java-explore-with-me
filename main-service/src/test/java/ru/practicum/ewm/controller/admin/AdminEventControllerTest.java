@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.model.EventState;
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AdminEventController.class)
+@ActiveProfiles("test")
 class AdminEventControllerTest {
 
     @Autowired
@@ -46,11 +48,11 @@ class AdminEventControllerTest {
 
         eventFullDto = new EventFullDto(
                 1L,
-                "Event annotation more than 20 characters",
+                "Event annotation more than 20 characters for validation",
                 categoryDto,
                 50L,
                 now.minusDays(1),
-                "Full event description more than 20 characters",
+                "Full event description more than 20 characters for validation",
                 now.plusDays(1),
                 userShortDto,
                 locationDto,
@@ -59,7 +61,7 @@ class AdminEventControllerTest {
                 now.minusHours(1),
                 true,
                 EventState.PUBLISHED,
-                "Test Event",
+                "Test Event Title",
                 1000L
         );
 
