@@ -23,11 +23,11 @@ public class PrivateEventController {
 
     @GetMapping
     public List<EventShortDto> getEvents(@PathVariable Long userId,
-                                         @RequestParam(required = false) Integer from,
-                                         @RequestParam(required = false) Integer size) {
+                                         @RequestParam(required = false, defaultValue = "0") Integer from,
+                                         @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.info("Getting events for user id: {}, from: {}, size: {}", userId, from, size);
-        int pageFrom = (from == null) ? 0 : Math.max(from, 0);
-        int pageSize = (size == null) ? 10 : (size <= 0 ? 10 : size);
+        int pageFrom = Math.max(from, 0);
+        int pageSize = size <= 0 ? 10 : size;
         return eventService.getEventsByUser(userId, pageFrom, pageSize);
     }
 

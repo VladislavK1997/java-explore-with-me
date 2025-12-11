@@ -65,6 +65,7 @@ public class RequestServiceImpl implements RequestService {
         ParticipationRequest request = ParticipationRequest.builder()
                 .event(event)
                 .requester(user)
+                .status(RequestStatus.PENDING)
                 .build();
 
         if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {

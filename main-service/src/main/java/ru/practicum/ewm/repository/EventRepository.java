@@ -48,4 +48,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                  Pageable pageable);
 
     List<Event> findByIdIn(List<Long> eventIds);
+
+    Long countByCategoryId(Long categoryId);
 }

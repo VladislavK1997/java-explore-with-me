@@ -1,6 +1,5 @@
 package ru.practicum.ewm.controller.publicapi;
 
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -19,8 +18,8 @@ public class PublicCategoryController {
     private final CategoryService categoryService;
 
     @GetMapping
-    public List<CategoryDto> getCategories(@RequestParam(defaultValue = "0") @Min(0) Integer from,
-                                           @RequestParam(defaultValue = "10") @Min(1) Integer size) {
+    public List<CategoryDto> getCategories(@RequestParam(required = false, defaultValue = "0") Integer from,
+                                           @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.info("Getting categories from: {}, size: {}", from, size);
         return categoryService.getCategories(from, size);
     }

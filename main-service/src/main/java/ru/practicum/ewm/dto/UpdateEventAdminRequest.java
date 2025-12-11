@@ -29,7 +29,7 @@ public class UpdateEventAdminRequest {
     private Integer participantLimit;
     private Boolean requestModeration;
 
-    @Pattern(regexp = "PUBLISH_EVENT|REJECT_EVENT|", message = "State action must be PUBLISH_EVENT or REJECT_EVENT")
+    @Pattern(regexp = "^(PUBLISH_EVENT|REJECT_EVENT)?$", message = "State action must be PUBLISH_EVENT or REJECT_EVENT")
     private String stateAction;
 
     @Size(min = 3, max = 120)

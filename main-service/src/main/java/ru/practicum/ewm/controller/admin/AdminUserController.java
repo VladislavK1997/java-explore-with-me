@@ -29,11 +29,11 @@ public class AdminUserController {
 
     @GetMapping
     public List<UserDto> getUsers(@RequestParam(required = false) List<Long> ids,
-                                  @RequestParam(required = false) Integer from,
-                                  @RequestParam(required = false) Integer size) {
+                                  @RequestParam(required = false, defaultValue = "0") Integer from,
+                                  @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.info("Getting users with ids: {}, from: {}, size: {}", ids, from, size);
-        int pageFrom = (from == null) ? 0 : Math.max(from, 0);
-        int pageSize = (size == null) ? 10 : (size <= 0 ? 10 : size);
+        int pageFrom = Math.max(from, 0);
+        int pageSize = size <= 0 ? 10 : size;
         return userService.getUsers(ids, pageFrom, pageSize);
     }
 
