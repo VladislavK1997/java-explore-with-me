@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = AdminUserController.class)
+@WebMvcTest(controllers = {AdminUserController.class, TestController.class})
 @ActiveProfiles("test")
 class ErrorHandlerTest {
 
@@ -101,7 +101,7 @@ class ErrorHandlerTest {
 
     @Test
     void handleMissingServletRequestParameterException_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(post("/users/1/requests"))
+        mockMvc.perform(get("/test/missing-param"))
                 .andExpect(status().isBadRequest());
     }
 }
