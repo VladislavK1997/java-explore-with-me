@@ -94,11 +94,6 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        if (updateRequest.getEventDate() != null) {
-            LocalDateTime newEventDate = updateRequest.getEventDate();
-            event.setEventDate(newEventDate);
-        }
-
         updateEventFields(event, updateRequest);
         Event updatedEvent = eventRepository.save(event);
 
@@ -186,7 +181,6 @@ public class EventServiceImpl implements EventService {
             if (updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
                 throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + updateRequest.getEventDate());
             }
-            event.setEventDate(updateRequest.getEventDate());
         }
 
         updateEventFields(event, updateRequest);
@@ -208,14 +202,6 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Invalid sort parameter: " + sort);
         }
 
-        if (text != null) {
-            if (text.length() > 7000) {
-                throw new ValidationException("Text parameter is too long (max 7000 characters)");
-            }
-            if (text.length() < 1) {
-                throw new ValidationException("Text parameter is too short (min 1 character)");
-            }
-        }
         statsService.saveHit("/events", ip);
 
         PageRequest page;
@@ -277,7 +263,15 @@ public class EventServiceImpl implements EventService {
         }
 
         try {
-            return LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            try {
+                return LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            } catch (DateTimeParseException e1) {
+                try {
+                    return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                } catch (DateTimeParseException e2) {
+                    throw new ValidationException("Invalid date format: " + dateTime + ". Expected format: yyyy-MM-dd HH:mm:ss");
+                }
+            }
         } catch (DateTimeParseException e) {
             throw new ValidationException("Invalid date format: " + dateTime + ". Expected format: yyyy-MM-dd HH:mm:ss");
         }

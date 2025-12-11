@@ -103,7 +103,7 @@ public class ErrorHandler {
     public ApiError handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
         log.error("Method argument type mismatch: {}", e.getMessage(), e);
         String message = String.format("Parameter '%s' should be of type %s",
-                e.getName(), e.getRequiredType().getSimpleName());
+                e.getName(), e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown");
         return new ApiError(
                 List.of(e.toString()),
                 message,

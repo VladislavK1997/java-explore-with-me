@@ -126,16 +126,16 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException("Event with id=" + eventId + " was not found");
         }
 
+        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+            throw new ConflictException("Event does not require moderation");
+        }
+
         if (updateRequest.getStatus() == null) {
             throw new ConflictException("Invalid status value: null");
         }
 
         if (!updateRequest.getStatus().equals("CONFIRMED") && !updateRequest.getStatus().equals("REJECTED")) {
             throw new ConflictException("Invalid status value: " + updateRequest.getStatus());
-        }
-
-        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
-            throw new ConflictException("Event does not require moderation");
         }
 
         List<ParticipationRequest> requests = requestRepository.findAllById(updateRequest.getRequestIds());

@@ -24,22 +24,22 @@ public class PublicEventController {
 
     @GetMapping
     public List<EventShortDto> getEvents(@RequestParam(required = false)
-                                         @Size(max = 2000, message = "Text length must be less than 2000 characters")
+                                         @Size(max = 7000, message = "Text length must be less than 7000 characters")
                                          String text,
                                          @RequestParam(required = false) List<Long> categories,
                                          @RequestParam(required = false) Boolean paid,
                                          @RequestParam(required = false)
-                                         @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
-                                                 message = "Date must be in format yyyy-MM-dd HH:mm:ss")
+                                         @Pattern(regexp = "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})?$",
+                                                 message = "Date must be in format yyyy-MM-dd HH:mm:ss or empty")
                                          String rangeStart,
                                          @RequestParam(required = false)
-                                         @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
-                                                 message = "Date must be in format yyyy-MM-dd HH:mm:ss")
+                                         @Pattern(regexp = "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})?$",
+                                                 message = "Date must be in format yyyy-MM-dd HH:mm:ss or empty")
                                          String rangeEnd,
                                          @RequestParam(defaultValue = "false") Boolean onlyAvailable,
                                          @RequestParam(required = false)
-                                         @Pattern(regexp = "EVENT_DATE|VIEWS",
-                                                 message = "Sort must be either EVENT_DATE or VIEWS")
+                                         @Pattern(regexp = "^(EVENT_DATE|VIEWS)?$",
+                                                 message = "Sort must be either EVENT_DATE, VIEWS or empty")
                                          String sort,
                                          @RequestParam(defaultValue = "0") @Min(0) Integer from,
                                          @RequestParam(defaultValue = "10") @Min(1) Integer size,

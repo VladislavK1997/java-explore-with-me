@@ -26,12 +26,12 @@ public class AdminEventController {
                                         @RequestParam(required = false) List<String> states,
                                         @RequestParam(required = false) List<Long> categories,
                                         @RequestParam(required = false)
-                                        @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
-                                                message = "Date must be in format yyyy-MM-dd HH:mm:ss")
+                                        @Pattern(regexp = "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})?$",
+                                                message = "Date must be in format yyyy-MM-dd HH:mm:ss or empty")
                                         String rangeStart,
                                         @RequestParam(required = false)
-                                        @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
-                                                message = "Date must be in format yyyy-MM-dd HH:mm:ss")
+                                        @Pattern(regexp = "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})?$",
+                                                message = "Date must be in format yyyy-MM-dd HH:mm:ss or empty")
                                         String rangeEnd,
                                         @RequestParam(defaultValue = "0") @Min(0) Integer from,
                                         @RequestParam(defaultValue = "10") @Min(1) Integer size) {
