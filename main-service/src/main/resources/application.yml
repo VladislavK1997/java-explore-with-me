@@ -19,7 +19,7 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
@@ -32,6 +32,13 @@ stats:
   server:
     url: ${STATS_SERVER_URL:http://localhost:9090}
 
+logging:
+  level:
+    ru.practicum: DEBUG
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
 ---
 spring:
   config:
@@ -42,6 +49,9 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:main_user}
     password: ${SPRING_DATASOURCE_PASSWORD:main_password}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
 
   jpa:
     hibernate:
@@ -50,7 +60,11 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    show-sql: false
+        jdbc:
+          batch_size: 20
+          lob:
+            non_contextual_creation: true
+    show-sql: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -59,8 +73,18 @@ stats:
   server:
     url: ${STATS_SERVER_URL:http://localhost:9090}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
 logging:
   level:
     ru.practicum: INFO
     org.springframework: INFO
     org.hibernate.SQL: WARN
+    org.springframework.web: INFO
