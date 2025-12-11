@@ -101,9 +101,7 @@ class ErrorHandlerTest {
 
     @Test
     void handleMissingServletRequestParameterException_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(get("/admin/users")
-                        .param("from", "0")
-                        .param("size", "10"))
+        mockMvc.perform(get("/users/{userId}/events", 1L))
                 .andExpect(status().isBadRequest());
     }
 }
