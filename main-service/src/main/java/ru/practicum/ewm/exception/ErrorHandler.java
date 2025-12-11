@@ -4,6 +4,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -76,9 +77,14 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.error("Validation error: {}", e.getMessage(), e);
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .map(error -> String.format("Field: %s. Error: %s. Value: %s",
+                        error.getField(), error.getDefaultMessage(), error.getRejectedValue()))
+                .findFirst()
+                .orElse("Validation failed");
         return new ApiError(
                 List.of(e.toString()),
-                "Validation failed",
+                message,
                 "Incorrectly made request.",
                 "BAD_REQUEST",
                 LocalDateTime.now()
@@ -133,6 +139,19 @@ public class ErrorHandler {
         return new ApiError(
                 List.of(e.toString()),
                 "Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss",
+                "Incorrectly made request.",
+                "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.error("HTTP message not readable: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                "Invalid request body format",
                 "Incorrectly made request.",
                 "BAD_REQUEST",
                 LocalDateTime.now()

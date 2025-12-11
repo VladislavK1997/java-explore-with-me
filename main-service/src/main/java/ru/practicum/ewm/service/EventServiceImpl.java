@@ -263,17 +263,13 @@ public class EventServiceImpl implements EventService {
         }
 
         try {
-            try {
-                return LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            } catch (DateTimeParseException e1) {
-                try {
-                    return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-                } catch (DateTimeParseException e2) {
-                    throw new ValidationException("Invalid date format: " + dateTime + ". Expected format: yyyy-MM-dd HH:mm:ss");
-                }
-            }
+            return LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         } catch (DateTimeParseException e) {
-            throw new ValidationException("Invalid date format: " + dateTime + ". Expected format: yyyy-MM-dd HH:mm:ss");
+            try {
+                return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            } catch (DateTimeParseException e2) {
+                throw new ValidationException("Invalid date format: " + dateTime + ". Expected format: yyyy-MM-dd HH:mm:ss");
+            }
         }
     }
 

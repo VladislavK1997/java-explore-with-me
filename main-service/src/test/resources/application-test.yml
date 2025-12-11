@@ -8,11 +8,20 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
   datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
     username: sa
     password:
     driver-class-name: org.h2.Driver
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+    mapper:
+      accept-case-insensitive-enums: true
 
 stats:
   server:
@@ -21,12 +30,7 @@ stats:
 logging:
   level:
     ru.practicum.ewm: DEBUG
-    org.springframework.web: INFO
+    org.springframework.web: DEBUG
+    org.springframework.validation: DEBUG
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
-
-jackson:
-  serialization:
-    write-dates-as-timestamps: false
-  deserialization:
-    fail-on-unknown-properties: false

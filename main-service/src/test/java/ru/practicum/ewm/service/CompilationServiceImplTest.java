@@ -78,6 +78,7 @@ class CompilationServiceImplTest {
         assertEquals(1L, result.getId());
         assertEquals("Summer Events", result.getTitle());
         assertTrue(result.getPinned());
+        assertNotNull(result.getEvents());
         assertEquals(3, result.getEvents().size());
         verify(eventRepository, times(1)).findByIdIn(List.of(1L, 2L, 3L));
         verify(compilationRepository, times(1)).save(any(Compilation.class));
@@ -110,7 +111,8 @@ class CompilationServiceImplTest {
         assertEquals(1L, result.getId());
         assertEquals("Empty Compilation", result.getTitle());
         assertFalse(result.getPinned());
-        assertNull(result.getEvents()); // или пустой список, зависит от реализации
+        assertNotNull(result.getEvents());
+        assertTrue(result.getEvents().isEmpty());
         verify(eventRepository, never()).findByIdIn(any());
         verify(compilationRepository, times(1)).save(any(Compilation.class));
         verify(statsService, never()).getViews(any());
