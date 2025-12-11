@@ -113,15 +113,49 @@ public class ErrorHandler {
         );
     }
 
-    @ExceptionHandler({
-            MissingServletRequestParameterException.class,
-            DateTimeParseException.class,
-            IllegalArgumentException.class,
-            IllegalStateException.class
-    })
+    @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleBadRequestExceptions(Exception e) {
-        log.error("Bad request: {}", e.getMessage(), e);
+    public ApiError handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
+        log.error("Missing servlet request parameter: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                e.getMessage(),
+                "Incorrectly made request.",
+                "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(DateTimeParseException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleDateTimeParseException(DateTimeParseException e) {
+        log.error("Date time parse error: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                "Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss",
+                "Incorrectly made request.",
+                "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleIllegalArgumentException(IllegalArgumentException e) {
+        log.error("Illegal argument: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                e.getMessage(),
+                "Incorrectly made request.",
+                "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleIllegalStateException(IllegalStateException e) {
+        log.error("Illegal state: {}", e.getMessage(), e);
         return new ApiError(
                 List.of(e.toString()),
                 e.getMessage(),
