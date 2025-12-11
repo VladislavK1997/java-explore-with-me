@@ -61,9 +61,10 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategory(Long catId) {
-        Category category = categoryRepository.findById(catId)
-                .orElseThrow(() -> new NotFoundException("Category with id=" + catId + " was not found"));
-        
+        if (!categoryRepository.existsById(catId)) {
+            throw new NotFoundException("Category with id=" + catId + " was not found");
+        }
+
         if (eventRepository.countByCategoryId(catId) > 0) {
             throw new ConflictException("The category is not empty");
         }
