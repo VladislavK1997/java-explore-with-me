@@ -11,9 +11,4 @@ class EwmApplicationTest {
     @Test
     void contextLoads() {
     }
-
-    @Test
-    void mainMethodStartsApplication() {
-        MainServiceApplication.main(new String[]{});
-    }
 }

@@ -1,7 +1,6 @@
 package ru.practicum.ewm.controller.admin;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -30,10 +29,12 @@ public class AdminUserController {
 
     @GetMapping
     public List<UserDto> getUsers(@RequestParam(required = false) List<Long> ids,
-                                  @RequestParam(defaultValue = "0") @Min(0) Integer from,
-                                  @RequestParam(defaultValue = "10") @Min(1) Integer size) {
+                                  @RequestParam(required = false) Integer from,
+                                  @RequestParam(required = false) Integer size) {
         log.info("Getting users with ids: {}, from: {}, size: {}", ids, from, size);
-        return userService.getUsers(ids, from, size);
+        int pageFrom = (from == null) ? 0 : Math.max(from, 0);
+        int pageSize = (size == null) ? 10 : (size <= 0 ? 10 : size);
+        return userService.getUsers(ids, pageFrom, pageSize);
     }
 
     @DeleteMapping("/{userId}")
