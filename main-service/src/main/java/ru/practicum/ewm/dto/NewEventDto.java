@@ -32,7 +32,10 @@ public class NewEventDto {
     private LocationDto location;
 
     private Boolean paid = false;
+
+    @Min(value = 0, message = "Participant limit must be greater than or equal to 0")
     private Integer participantLimit = 0;
+
     private Boolean requestModeration = true;
 
     @NotBlank

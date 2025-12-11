@@ -11,18 +11,24 @@ import java.time.LocalDateTime;
 @UtilityClass
 public class EventMapper {
     public static Event toEvent(NewEventDto newEventDto) {
+        if (newEventDto == null) {
+            return null;
+        }
+
         return Event.builder()
                 .annotation(newEventDto.getAnnotation())
                 .description(newEventDto.getDescription())
                 .eventDate(newEventDto.getEventDate())
-                .location(new Location(newEventDto.getLocation().getLat(), newEventDto.getLocation().getLon()))
-                .paid(newEventDto.getPaid())
-                .participantLimit(newEventDto.getParticipantLimit())
-                .requestModeration(newEventDto.getRequestModeration())
+                .location(newEventDto.getLocation() != null ?
+                        new Location(newEventDto.getLocation().getLat(), newEventDto.getLocation().getLon()) : null)
+                .paid(newEventDto.getPaid() != null ? newEventDto.getPaid() : false)
+                .participantLimit(newEventDto.getParticipantLimit() != null ? newEventDto.getParticipantLimit() : 0)
+                .requestModeration(newEventDto.getRequestModeration() != null ? newEventDto.getRequestModeration() : true)
                 .title(newEventDto.getTitle())
                 .state(EventState.PENDING)
                 .createdOn(LocalDateTime.now())
                 .confirmedRequests(0)
+                .views(0L)
                 .build();
     }
 
@@ -40,11 +46,11 @@ public class EventMapper {
                 event.getEventDate(),
                 event.getInitiator() != null ? new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()) : null,
                 event.getLocation() != null ? new LocationDto(event.getLocation().getLat(), event.getLocation().getLon()) : null,
-                event.getPaid(),
-                event.getParticipantLimit(),
+                event.getPaid() != null ? event.getPaid() : false,
+                event.getParticipantLimit() != null ? event.getParticipantLimit() : 0,
                 event.getPublishedOn(),
-                event.getRequestModeration(),
-                event.getState(),
+                event.getRequestModeration() != null ? event.getRequestModeration() : true,
+                event.getState() != null ? event.getState() : EventState.PENDING,
                 event.getTitle(),
                 event.getViews() != null ? event.getViews() : 0L
         );
@@ -61,7 +67,7 @@ public class EventMapper {
                 event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L,
                 event.getEventDate(),
                 event.getInitiator() != null ? new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()) : null,
-                event.getPaid(),
+                event.getPaid() != null ? event.getPaid() : false,
                 event.getTitle(),
                 event.getViews() != null ? event.getViews() : 0L
         );
