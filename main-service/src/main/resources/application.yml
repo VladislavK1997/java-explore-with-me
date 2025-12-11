@@ -1,47 +1,32 @@
 spring:
-  application:
-    name: ewm-main-service
-
   datasource:
-    url: jdbc:h2:mem:maindb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/main_db}
+    username: ${SPRING_DATASOURCE_USERNAME:main_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:main_password}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: none
-    show-sql: false
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:create-drop}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    open-in-view: false
-
-  jackson:
-    default-property-inclusion: non_null
-    serialization:
-      write-dates-as-timestamps: false
-    deserialization:
-      fail-on-unknown-properties: false
+    show-sql: false
 
   sql:
     init:
-      mode: always
-      schema-locations: classpath:schema.sql
-      data-locations: classpath:data.sql
+      mode: never
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 stats:
   server:
-    url: http://localhost:9090
+    url: ${STATS_SERVER_URL:http://localhost:9090}
 
 logging:
   level:
-    ru.practicum.ewm: INFO
-    org.springframework.web: INFO
-    org.springframework.validation: INFO
+    ru.practicum: INFO
+    org.springframework: INFO
     org.hibernate.SQL: WARN
-    org.hibernate.type.descriptor.sql.BasicBinder: WARN
