@@ -29,7 +29,7 @@ public class UpdateEventUserRequest {
     private Integer participantLimit;
     private Boolean requestModeration;
 
-    @Pattern(regexp = "SEND_TO_REVIEW|CANCEL_REVIEW|^$", message = "State action must be SEND_TO_REVIEW or CANCEL_REVIEW")
+    @Pattern(regexp = "SEND_TO_REVIEW|CANCEL_REVIEW|", message = "State action must be SEND_TO_REVIEW or CANCEL_REVIEW")
     private String stateAction;
 
     @Size(min = 3, max = 120)

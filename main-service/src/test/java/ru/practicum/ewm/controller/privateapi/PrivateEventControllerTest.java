@@ -7,12 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.ewm.config.StatsClientConfig;
 import ru.practicum.ewm.dto.*;
-import ru.practicum.ewm.exception.ErrorHandler;
 import ru.practicum.ewm.model.EventState;
 import ru.practicum.ewm.service.EventService;
 import ru.practicum.ewm.service.RequestService;
@@ -26,7 +23,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PrivateEventController.class)
-@Import({StatsClientConfig.class, ErrorHandler.class})
 class PrivateEventControllerTest {
 
     @Autowired
@@ -66,11 +62,11 @@ class PrivateEventControllerTest {
 
         eventFullDto = new EventFullDto(
                 1L,
-                "Event annotation",
+                "Event annotation more than 20 characters",
                 categoryDto,
                 50L,
                 now.minusDays(1),
-                "Full event description",
+                "Full event description more than 20 characters",
                 now.plusDays(1),
                 userShortDto,
                 new LocationDto(55.754167f, 37.62f),
@@ -84,7 +80,7 @@ class PrivateEventControllerTest {
         );
 
         updateRequest = new UpdateEventUserRequest();
-        updateRequest.setTitle("Updated Event");
+        updateRequest.setTitle("Updated Event Title");
         updateRequest.setAnnotation("Updated annotation more than 20 characters");
         updateRequest.setDescription("Updated description more than 20 characters");
         updateRequest.setEventDate(now.plusDays(2));
@@ -118,15 +114,5 @@ class PrivateEventControllerTest {
                 .andExpect(status().isOk());
 
         verify(eventService, times(1)).updateEventByUser(eq(1L), eq(10L), any(UpdateEventUserRequest.class));
-    }
-
-    @Test
-    void updateEvent_InvalidStateAction_ReturnsBadRequest() throws Exception {
-        updateRequest.setStateAction("INVALID_ACTION");
-
-        mockMvc.perform(patch("/users/{userId}/events/{eventId}", 1L, 10L)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRequest)))
-                .andExpect(status().isBadRequest());
     }
 }

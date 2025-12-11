@@ -1,6 +1,7 @@
 package ru.practicum.ewm.service;
 
 import ru.practicum.ewm.dto.*;
+import ru.practicum.ewm.exception.ValidationException;
 
 import java.util.List;
 

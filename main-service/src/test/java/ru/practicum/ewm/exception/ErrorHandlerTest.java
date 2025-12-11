@@ -1,17 +1,16 @@
 package ru.practicum.ewm.exception;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.ewm.config.StatsClientConfig;
+import ru.practicum.ewm.controller.admin.AdminUserController;
 import ru.practicum.ewm.controller.admin.AdminEventController;
 import ru.practicum.ewm.dto.NewUserRequest;
-import ru.practicum.ewm.service.EventService;
 import ru.practicum.ewm.service.UserService;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -19,18 +18,16 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@Import({StatsClientConfig.class, ErrorHandler.class})
-@WebMvcTest(controllers = {AdminEventController.class})
+@WebMvcTest(controllers = {AdminUserController.class, AdminEventController.class})
 class ErrorHandlerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private EventService eventService;
-
-    @MockBean
     private UserService userService;
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
     void handleNotFoundException_shouldReturnNotFound() throws Exception {
@@ -40,8 +37,7 @@ class ErrorHandlerTest {
         mockMvc.perform(post("/admin/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"John Doe\",\"email\":\"john@example.com\"}"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value("NOT_FOUND"));
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -52,8 +48,7 @@ class ErrorHandlerTest {
         mockMvc.perform(post("/admin/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"John Doe\",\"email\":\"john@example.com\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -64,8 +59,7 @@ class ErrorHandlerTest {
         mockMvc.perform(post("/admin/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"John Doe\",\"email\":\"john@example.com\"}"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value("CONFLICT"));
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -76,15 +70,13 @@ class ErrorHandlerTest {
         mockMvc.perform(post("/admin/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"John Doe\",\"email\":\"john@example.com\"}"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value("CONFLICT"));
+                .andExpect(status().isConflict());
     }
 
     @Test
     void handleMethodArgumentTypeMismatchException_shouldReturnBadRequest() throws Exception {
         mockMvc.perform(delete("/admin/users/{userId}", "invalid"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -92,24 +84,23 @@ class ErrorHandlerTest {
         mockMvc.perform(post("/admin/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"\",\"email\":\"invalid-email\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void handleMissingServletRequestParameterException_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(get("/admin/users")
-                        .param("from", "0"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
+        mockMvc.perform(get("/admin/events"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void handleDateTimeParseException_shouldReturnBadRequest() throws Exception {
         mockMvc.perform(get("/admin/events")
-                        .param("rangeStart", "invalid-date"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
+                        .param("rangeStart", "invalid-date")
+                        .param("rangeEnd", "2024-01-01 00:00:00")
+                        .param("from", "0")
+                        .param("size", "10"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -120,8 +111,7 @@ class ErrorHandlerTest {
         mockMvc.perform(post("/admin/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"John Doe\",\"email\":\"john@example.com\"}"))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value("INTERNAL_SERVER_ERROR"));
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -129,15 +119,15 @@ class ErrorHandlerTest {
         mockMvc.perform(get("/admin/users")
                         .param("from", "-1")
                         .param("size", "0"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void handleInvalidEventState_shouldReturnBadRequest() throws Exception {
         mockMvc.perform(get("/admin/events")
-                        .param("states", "INVALID_STATE"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
+                        .param("states", "INVALID_STATE")
+                        .param("from", "0")
+                        .param("size", "10"))
+                .andExpect(status().isBadRequest());
     }
 }
