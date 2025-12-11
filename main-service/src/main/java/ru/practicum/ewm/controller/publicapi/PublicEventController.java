@@ -36,7 +36,7 @@ public class PublicEventController {
                                          @Pattern(regexp = "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})?$",
                                                  message = "Date must be in format yyyy-MM-dd HH:mm:ss or empty")
                                          String rangeEnd,
-                                         @RequestParam(required = false) Boolean onlyAvailable,
+                                         @RequestParam(defaultValue = "false") Boolean onlyAvailable,
                                          @RequestParam(required = false)
                                          @Pattern(regexp = "^(EVENT_DATE|VIEWS)?$",
                                                  message = "Sort must be either EVENT_DATE, VIEWS or empty")
@@ -49,9 +49,8 @@ public class PublicEventController {
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
 
         String ip = request.getRemoteAddr();
-        boolean onlyAvailableValue = onlyAvailable != null ? onlyAvailable : false;
         return eventService.getEventsPublic(text, categories, paid, rangeStart, rangeEnd,
-                onlyAvailableValue, sort, from, size, ip);
+                onlyAvailable, sort, from, size, ip);
     }
 
     @GetMapping("/{id}")

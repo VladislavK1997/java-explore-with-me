@@ -29,14 +29,13 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final StatsService statsService;
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                                String rangeStart, String rangeEnd, Integer from, Integer size) {
         validatePagination(from, size);
 
-        PageRequest page = PageRequest.of(from / size, size, Sort.by("id").ascending());
+        PageRequest page = PageRequest.of(from / size, size);
 
         List<EventState> eventStates = null;
         if (states != null && !states.isEmpty()) {
@@ -54,19 +53,14 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = eventRepository.findEventsByAdmin(users, eventStates, categories, start, end, page);
 
-        if (events.isEmpty()) {
-            return Collections.emptyList();
-        }
-
         Map<Long, Long> views = statsService.getViews(events.stream()
                 .map(Event::getId)
                 .collect(Collectors.toList()));
 
         return events.stream()
                 .map(event -> {
-                    EventFullDto dto = EventMapper.toEventFullDto(event);
-                    dto.setViews(views.getOrDefault(event.getId(), 0L));
-                    return dto;
+                    event.setViews(views.getOrDefault(event.getId(), 0L));
+                    return EventMapper.toEventFullDto(event);
                 })
                 .collect(Collectors.toList());
     }
@@ -76,11 +70,6 @@ public class EventServiceImpl implements EventService {
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateRequest) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
-
-        // Валидация participantLimit
-        if (updateRequest.getParticipantLimit() != null && updateRequest.getParticipantLimit() < 0) {
-            throw new ValidationException("Field: participantLimit. Error: must be greater than or equal to 0. Value: " + updateRequest.getParticipantLimit());
-        }
 
         if (updateRequest.getStateAction() != null) {
             switch (updateRequest.getStateAction()) {
@@ -109,22 +98,17 @@ public class EventServiceImpl implements EventService {
         Event updatedEvent = eventRepository.save(event);
 
         Long views = statsService.getViews(List.of(eventId)).getOrDefault(eventId, 0L);
+        updatedEvent.setViews(views);
 
-        EventFullDto dto = EventMapper.toEventFullDto(updatedEvent);
-        dto.setViews(views);
-        return dto;
+        return EventMapper.toEventFullDto(updatedEvent);
     }
 
     @Override
     public List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size) {
         validatePagination(from, size);
 
-        PageRequest page = PageRequest.of(from / size, size, Sort.by("eventDate").descending());
+        PageRequest page = PageRequest.of(from / size, size);
         List<Event> events = eventRepository.findByInitiatorId(userId, page);
-
-        if (events.isEmpty()) {
-            return Collections.emptyList();
-        }
 
         Map<Long, Long> views = statsService.getViews(events.stream()
                 .map(Event::getId)
@@ -132,9 +116,8 @@ public class EventServiceImpl implements EventService {
 
         return events.stream()
                 .map(event -> {
-                    EventShortDto dto = EventMapper.toEventShortDto(event);
-                    dto.setViews(views.getOrDefault(event.getId(), 0L));
-                    return dto;
+                    event.setViews(views.getOrDefault(event.getId(), 0L));
+                    return EventMapper.toEventShortDto(event);
                 })
                 .collect(Collectors.toList());
     }
@@ -148,25 +131,16 @@ public class EventServiceImpl implements EventService {
         Category category = categoryRepository.findById(newEventDto.getCategory())
                 .orElseThrow(() -> new NotFoundException("Category with id=" + newEventDto.getCategory() + " was not found"));
 
-        // Валидация participantLimit
-        if (newEventDto.getParticipantLimit() != null && newEventDto.getParticipantLimit() < 0) {
-            throw new ValidationException("Field: participantLimit. Error: must be greater than or equal to 0. Value: " + newEventDto.getParticipantLimit());
-        }
-
         if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-            throw new ConflictException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + newEventDto.getEventDate().format(FORMATTER));
+            throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + newEventDto.getEventDate());
         }
 
         Event event = EventMapper.toEvent(newEventDto);
         event.setInitiator(user);
         event.setCategory(category);
-        event.setConfirmedRequests(0);
 
         Event savedEvent = eventRepository.save(event);
-
-        EventFullDto dto = EventMapper.toEventFullDto(savedEvent);
-        dto.setViews(0L);
-        return dto;
+        return EventMapper.toEventFullDto(savedEvent);
     }
 
     @Override
@@ -175,10 +149,9 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
         Long views = statsService.getViews(List.of(eventId)).getOrDefault(eventId, 0L);
+        event.setViews(views);
 
-        EventFullDto dto = EventMapper.toEventFullDto(event);
-        dto.setViews(views);
-        return dto;
+        return EventMapper.toEventFullDto(event);
     }
 
     @Override
@@ -189,11 +162,6 @@ public class EventServiceImpl implements EventService {
 
         if (event.getState() == EventState.PUBLISHED) {
             throw new ConflictException("Only pending or canceled events can be changed");
-        }
-
-        // Валидация participantLimit
-        if (updateRequest.getParticipantLimit() != null && updateRequest.getParticipantLimit() < 0) {
-            throw new ValidationException("Field: participantLimit. Error: must be greater than or equal to 0. Value: " + updateRequest.getParticipantLimit());
         }
 
         if (updateRequest.getStateAction() != null) {
@@ -211,7 +179,7 @@ public class EventServiceImpl implements EventService {
 
         if (updateRequest.getEventDate() != null) {
             if (updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
-                throw new ConflictException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + updateRequest.getEventDate().format(FORMATTER));
+                throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + updateRequest.getEventDate());
             }
         }
 
@@ -219,10 +187,9 @@ public class EventServiceImpl implements EventService {
         Event updatedEvent = eventRepository.save(event);
 
         Long views = statsService.getViews(List.of(eventId)).getOrDefault(eventId, 0L);
+        updatedEvent.setViews(views);
 
-        EventFullDto dto = EventMapper.toEventFullDto(updatedEvent);
-        dto.setViews(views);
-        return dto;
+        return EventMapper.toEventFullDto(updatedEvent);
     }
 
     @Override
@@ -240,8 +207,10 @@ public class EventServiceImpl implements EventService {
         PageRequest page;
         if ("EVENT_DATE".equals(sort)) {
             page = PageRequest.of(from / size, size, Sort.by("eventDate").descending());
+        } else if ("VIEWS".equals(sort)) {
+            page = PageRequest.of(from / size, size);
         } else {
-            page = PageRequest.of(from / size, size, Sort.by("id").ascending());
+            page = PageRequest.of(from / size, size);
         }
 
         LocalDateTime start = parseDateTime(rangeStart);
@@ -253,19 +222,14 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events = eventRepository.findEventsPublic(text, categories, paid, start, end, onlyAvailable, page);
 
-        if (events.isEmpty()) {
-            return Collections.emptyList();
-        }
-
         Map<Long, Long> views = statsService.getViews(events.stream()
                 .map(Event::getId)
                 .collect(Collectors.toList()));
 
         List<EventShortDto> result = events.stream()
                 .map(event -> {
-                    EventShortDto dto = EventMapper.toEventShortDto(event);
-                    dto.setViews(views.getOrDefault(event.getId(), 0L));
-                    return dto;
+                    event.setViews(views.getOrDefault(event.getId(), 0L));
+                    return EventMapper.toEventShortDto(event);
                 })
                 .collect(Collectors.toList());
 
@@ -288,10 +252,9 @@ public class EventServiceImpl implements EventService {
         statsService.saveHit("/events/" + eventId, ip);
 
         Long views = statsService.getViews(List.of(eventId)).getOrDefault(eventId, 0L);
+        event.setViews(views);
 
-        EventFullDto dto = EventMapper.toEventFullDto(event);
-        dto.setViews(views);
-        return dto;
+        return EventMapper.toEventFullDto(event);
     }
 
     private LocalDateTime parseDateTime(String dateTime) {
@@ -300,7 +263,7 @@ public class EventServiceImpl implements EventService {
         }
 
         try {
-            return LocalDateTime.parse(dateTime, FORMATTER);
+            return LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         } catch (DateTimeParseException e) {
             try {
                 return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
@@ -311,10 +274,10 @@ public class EventServiceImpl implements EventService {
     }
 
     private void validatePagination(Integer from, Integer size) {
-        if (from == null || from < 0) {
+        if (from < 0) {
             throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
         }
-        if (size == null || size <= 0) {
+        if (size <= 0) {
             throw new ValidationException("Parameter 'size' must be greater than 0");
         }
     }

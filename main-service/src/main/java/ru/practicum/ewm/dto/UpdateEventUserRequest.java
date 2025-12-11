@@ -1,7 +1,6 @@
 package ru.practicum.ewm.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -27,10 +26,7 @@ public class UpdateEventUserRequest {
 
     private LocationDto location;
     private Boolean paid;
-
-    @Min(value = 0, message = "Participant limit must be greater than or equal to 0")
     private Integer participantLimit;
-
     private Boolean requestModeration;
 
     @Pattern(regexp = "SEND_TO_REVIEW|CANCEL_REVIEW|", message = "State action must be SEND_TO_REVIEW or CANCEL_REVIEW")
