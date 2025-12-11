@@ -2,6 +2,7 @@ package ru.practicum.ewm.controller.admin;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -24,8 +25,14 @@ public class AdminEventController {
     public List<EventFullDto> getEvents(@RequestParam(required = false) List<Long> users,
                                         @RequestParam(required = false) List<String> states,
                                         @RequestParam(required = false) List<Long> categories,
-                                        @RequestParam(required = false) String rangeStart,
-                                        @RequestParam(required = false) String rangeEnd,
+                                        @RequestParam(required = false)
+                                        @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
+                                                message = "Date must be in format yyyy-MM-dd HH:mm:ss")
+                                        String rangeStart,
+                                        @RequestParam(required = false)
+                                        @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
+                                                message = "Date must be in format yyyy-MM-dd HH:mm:ss")
+                                        String rangeEnd,
                                         @RequestParam(defaultValue = "0") @Min(0) Integer from,
                                         @RequestParam(defaultValue = "10") @Min(1) Integer size) {
         log.info("Getting events by admin with filters: users={}, states={}, categories={}, " +

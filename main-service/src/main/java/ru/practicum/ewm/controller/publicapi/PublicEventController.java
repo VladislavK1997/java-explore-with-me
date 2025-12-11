@@ -2,6 +2,8 @@ package ru.practicum.ewm.controller.publicapi;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -21,13 +23,24 @@ public class PublicEventController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventShortDto> getEvents(@RequestParam(required = false) String text,
+    public List<EventShortDto> getEvents(@RequestParam(required = false)
+                                         @Size(max = 2000, message = "Text length must be less than 2000 characters")
+                                         String text,
                                          @RequestParam(required = false) List<Long> categories,
                                          @RequestParam(required = false) Boolean paid,
-                                         @RequestParam(required = false) String rangeStart,
-                                         @RequestParam(required = false) String rangeEnd,
+                                         @RequestParam(required = false)
+                                         @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
+                                                 message = "Date must be in format yyyy-MM-dd HH:mm:ss")
+                                         String rangeStart,
+                                         @RequestParam(required = false)
+                                         @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
+                                                 message = "Date must be in format yyyy-MM-dd HH:mm:ss")
+                                         String rangeEnd,
                                          @RequestParam(defaultValue = "false") Boolean onlyAvailable,
-                                         @RequestParam(required = false) String sort,
+                                         @RequestParam(required = false)
+                                         @Pattern(regexp = "EVENT_DATE|VIEWS",
+                                                 message = "Sort must be either EVENT_DATE or VIEWS")
+                                         String sort,
                                          @RequestParam(defaultValue = "0") @Min(0) Integer from,
                                          @RequestParam(defaultValue = "10") @Min(1) Integer size,
                                          HttpServletRequest request) {

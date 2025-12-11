@@ -98,10 +98,27 @@ public class ErrorHandler {
         );
     }
 
-    @ExceptionHandler({IllegalArgumentException.class,
-            MethodArgumentTypeMismatchException.class,
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        log.error("Method argument type mismatch: {}", e.getMessage(), e);
+        String message = String.format("Parameter '%s' should be of type %s",
+                e.getName(), e.getRequiredType().getSimpleName());
+        return new ApiError(
+                List.of(e.toString()),
+                message,
+                "Incorrectly made request.",
+                "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler({
             MissingServletRequestParameterException.class,
-            DateTimeParseException.class})
+            DateTimeParseException.class,
+            IllegalArgumentException.class,
+            IllegalStateException.class
+    })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBadRequestExceptions(Exception e) {
         log.error("Bad request: {}", e.getMessage(), e);

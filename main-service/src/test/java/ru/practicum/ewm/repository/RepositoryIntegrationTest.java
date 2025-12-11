@@ -64,27 +64,23 @@ class RepositoryIntegrationTest {
                 .name("John Doe")
                 .email("john@example.com")
                 .build();
-        user1 = entityManager.persist(user1);
-        entityManager.flush();
+        user1 = userRepository.save(user1);
 
         user2 = User.builder()
                 .name("Jane Smith")
                 .email("jane@example.com")
                 .build();
-        user2 = entityManager.persist(user2);
-        entityManager.flush();
+        user2 = userRepository.save(user2);
 
         category1 = Category.builder()
                 .name("Concerts")
                 .build();
-        category1 = entityManager.persist(category1);
-        entityManager.flush();
+        category1 = categoryRepository.save(category1);
 
         category2 = Category.builder()
                 .name("Theater")
                 .build();
-        category2 = entityManager.persist(category2);
-        entityManager.flush();
+        category2 = categoryRepository.save(category2);
 
         event1 = Event.builder()
                 .title("Rock Concert")
@@ -102,8 +98,7 @@ class RepositoryIntegrationTest {
                 .createdOn(now.minusDays(1))
                 .publishedOn(now.minusHours(1))
                 .build();
-        event1 = entityManager.persist(event1);
-        entityManager.flush();
+        event1 = eventRepository.save(event1);
 
         event2 = Event.builder()
                 .title("Theater Play")
@@ -120,8 +115,7 @@ class RepositoryIntegrationTest {
                 .confirmedRequests(10)
                 .createdOn(now.minusDays(1))
                 .build();
-        event2 = entityManager.persist(event2);
-        entityManager.flush();
+        event2 = eventRepository.save(event2);
 
         event3 = Event.builder()
                 .title("Jazz Concert")
@@ -138,8 +132,7 @@ class RepositoryIntegrationTest {
                 .confirmedRequests(0)
                 .createdOn(now.minusDays(2))
                 .build();
-        event3 = entityManager.persist(event3);
-        entityManager.flush();
+        event3 = eventRepository.save(event3);
     }
 
     @Test

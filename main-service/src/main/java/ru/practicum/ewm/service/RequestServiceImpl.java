@@ -126,8 +126,11 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException("Event with id=" + eventId + " was not found");
         }
 
-        if (updateRequest.getStatus() == null ||
-                (!updateRequest.getStatus().equals("CONFIRMED") && !updateRequest.getStatus().equals("REJECTED"))) {
+        if (updateRequest.getStatus() == null) {
+            throw new ConflictException("Invalid status value: null");
+        }
+
+        if (!updateRequest.getStatus().equals("CONFIRMED") && !updateRequest.getStatus().equals("REJECTED")) {
             throw new ConflictException("Invalid status value: " + updateRequest.getStatus());
         }
 
