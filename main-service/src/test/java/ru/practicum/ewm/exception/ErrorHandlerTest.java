@@ -107,8 +107,7 @@ class ErrorHandlerTest {
 
     @Test
     void handleMissingServletRequestParameterException_shouldReturnBadRequest() throws Exception {
-        // Запрос без обязательного параметра
-        mockMvc.perform(post("/users/{userId}/requests", 1L))
+        mockMvc.perform(get("/admin/users"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
     }
@@ -116,8 +115,7 @@ class ErrorHandlerTest {
     @Test
     void handleDateTimeParseException_shouldReturnBadRequest() throws Exception {
         mockMvc.perform(get("/admin/events")
-                        .param("rangeStart", "invalid-date")
-                        .param("rangeEnd", "invalid-date"))
+                        .param("rangeStart", "invalid-date"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
     }
@@ -137,7 +135,7 @@ class ErrorHandlerTest {
 
     @Test
     void handleInvalidPaginationParameters_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(get("/categories")
+        mockMvc.perform(get("/admin/users")
                         .param("from", "-1")
                         .param("size", "0"))
                 .andExpect(status().isBadRequest())

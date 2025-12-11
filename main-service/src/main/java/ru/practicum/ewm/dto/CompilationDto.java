@@ -13,6 +13,6 @@ import java.util.List;
 public class CompilationDto {
     private List<EventShortDto> events = new ArrayList<>();
     private Long id;
-    private Boolean pinned;
+    private Boolean pinned = false;
     private String title;
 }
