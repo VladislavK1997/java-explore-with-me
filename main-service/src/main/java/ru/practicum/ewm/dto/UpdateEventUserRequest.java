@@ -1,6 +1,7 @@
 package ru.practicum.ewm.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,6 +28,8 @@ public class UpdateEventUserRequest {
     private Boolean paid;
     private Integer participantLimit;
     private Boolean requestModeration;
+
+    @Pattern(regexp = "SEND_TO_REVIEW|CANCEL_REVIEW|^$", message = "State action must be SEND_TO_REVIEW or CANCEL_REVIEW")
     private String stateAction;
 
     @Size(min = 3, max = 120)

@@ -34,3 +34,8 @@ logging:
     org.springframework.validation: DEBUG
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
+
+server:
+  error:
+    include-message: always
+    include-binding-errors: always

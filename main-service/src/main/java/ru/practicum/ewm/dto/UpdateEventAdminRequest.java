@@ -1,6 +1,7 @@
 package ru.practicum.ewm.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,6 +28,8 @@ public class UpdateEventAdminRequest {
     private Boolean paid;
     private Integer participantLimit;
     private Boolean requestModeration;
+
+    @Pattern(regexp = "PUBLISH_EVENT|REJECT_EVENT|^$", message = "State action must be PUBLISH_EVENT or REJECT_EVENT")
     private String stateAction;
 
     @Size(min = 3, max = 120)
