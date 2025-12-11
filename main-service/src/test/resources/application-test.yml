@@ -1,37 +1,25 @@
 spring:
-  main:
-    allow-bean-definition-overriding: true
-    lazy-initialization: true
-
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: false
-    database-platform: org.hibernate.dialect.H2Dialect
-    defer-datasource-initialization: true
-
   datasource:
     url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
     username: sa
     password:
     driver-class-name: org.h2.Driver
 
-  jackson:
-    default-property-inclusion: non_null
-    serialization:
-      write-dates-as-timestamps: false
-    deserialization:
-      fail-on-unknown-properties: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    defer-datasource-initialization: true
 
   sql:
     init:
-      mode: always
-      schema-locations: classpath:schema.sql
-      data-locations: classpath:data.sql
+      mode: never
 
-stats:
-  server:
-    url: http://localhost:9090
+  main:
+    allow-bean-definition-overriding: true
 
 logging:
   level:

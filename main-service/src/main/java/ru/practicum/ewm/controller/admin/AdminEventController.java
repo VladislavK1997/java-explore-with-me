@@ -21,13 +21,13 @@ public class AdminEventController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventFullDto> getEvents(@RequestParam(required = false) List<Long> users,
-                                        @RequestParam(required = false) List<String> states,
-                                        @RequestParam(required = false) List<Long> categories,
-                                        @RequestParam(required = false) String rangeStart,
-                                        @RequestParam(required = false) String rangeEnd,
-                                        @RequestParam(required = false) Integer from,
-                                        @RequestParam(required = false) Integer size) {
+    public List<EventFullDto> getEvents( @RequestParam(required = false) List<Long> users,
+                                         @RequestParam(required = false) List<String> states,
+                                         @RequestParam(required = false) List<Long> categories,
+                                         @RequestParam(required = false) String rangeStart,
+                                         @RequestParam(required = false) String rangeEnd,
+                                         @RequestParam(defaultValue = "0") Integer from,
+                                         @RequestParam(defaultValue = "10") Integer size) {
         log.info("Getting events by admin with filters");
         int pageFrom = (from == null) ? 0 : Math.max(from, 0);
         int pageSize = (size == null) ? 10 : (size <= 0 ? 10 : size);

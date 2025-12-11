@@ -31,26 +31,9 @@ class RepositoryIntegrationTest {
     private User user1;
     private User user2;
     private Category category1;
-    private final LocalDateTime now = LocalDateTime.now();
 
     @BeforeEach
     void setUp() {
-        user1 = User.builder()
-                .name("John Doe")
-                .email("john@example.com")
-                .build();
-        user1 = userRepository.save(user1);
-
-        user2 = User.builder()
-                .name("Jane Smith")
-                .email("jane@example.com")
-                .build();
-        user2 = userRepository.save(user2);
-
-        category1 = Category.builder()
-                .name("Concerts")
-                .build();
-        category1 = categoryRepository.save(category1);
     }
 
     @Test
@@ -62,6 +45,7 @@ class RepositoryIntegrationTest {
 
         User savedUser = userRepository.save(newUser);
         entityManager.flush();
+        entityManager.clear();
 
         Optional<User> foundUserOpt = userRepository.findById(savedUser.getId());
         assertTrue(foundUserOpt.isPresent());
@@ -73,6 +57,19 @@ class RepositoryIntegrationTest {
 
     @Test
     void userRepository_findByIdIn_shouldReturnFilteredUsers() {
+        User user1 = userRepository.save(User.builder()
+                .name("John Doe")
+                .email("john@example.com")
+                .build());
+
+        User user2 = userRepository.save(User.builder()
+                .name("Jane Smith")
+                .email("jane@example.com")
+                .build());
+
+        entityManager.flush();
+        entityManager.clear();
+
         List<User> users = userRepository.findByIdIn(
                 List.of(user1.getId(), user2.getId()),
                 PageRequest.of(0, 10));
@@ -99,6 +96,7 @@ class RepositoryIntegrationTest {
 
         Category savedCategory = categoryRepository.save(newCategory);
         entityManager.flush();
+        entityManager.clear();
 
         Category foundCategory = categoryRepository.findById(savedCategory.getId()).orElse(null);
 
