@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Import(StatsClientConfig.class)
 @WebMvcTest(PublicCompilationController.class)
+@ActiveProfiles("test")
 class PublicCompilationControllerTest {
 
     @Autowired
@@ -148,6 +149,26 @@ class PublicCompilationControllerTest {
         mockMvc.perform(get("/compilations")
                         .param("from", "-1")
                         .param("size", "0"))
+                .andExpect(status().isBadRequest());
+
+        verify(compilationService, never()).getCompilations(any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void getCompilations_InvalidSizeParam_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(get("/compilations")
+                        .param("from", "0")
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest());
+
+        verify(compilationService, never()).getCompilations(any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void getCompilations_InvalidFromParam_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(get("/compilations")
+                        .param("from", "-1")
+                        .param("size", "10"))
                 .andExpect(status().isBadRequest());
 
         verify(compilationService, never()).getCompilations(any(), anyInt(), anyInt());

@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Import(StatsClientConfig.class)
 @WebMvcTest(PublicCategoryController.class)
+@ActiveProfiles("test")
 class PublicCategoryControllerTest {
 
     @Autowired
@@ -107,6 +108,26 @@ class PublicCategoryControllerTest {
         mockMvc.perform(get("/categories")
                         .param("from", "-1")
                         .param("size", "0"))
+                .andExpect(status().isBadRequest());
+
+        verify(categoryService, never()).getCategories(anyInt(), anyInt());
+    }
+
+    @Test
+    void getCategories_InvalidSizeParam_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(get("/categories")
+                        .param("from", "0")
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest());
+
+        verify(categoryService, never()).getCategories(anyInt(), anyInt());
+    }
+
+    @Test
+    void getCategories_InvalidFromParam_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(get("/categories")
+                        .param("from", "-1")
+                        .param("size", "10"))
                 .andExpect(status().isBadRequest());
 
         verify(categoryService, never()).getCategories(anyInt(), anyInt());
