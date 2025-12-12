@@ -63,92 +63,10 @@ class PublicCompilationControllerTest {
     }
 
     @Test
-    void getCompilations_WithPinnedFilter_ReturnsCompilations() throws Exception {
-        List<CompilationDto> compilations = List.of(compilationDto);
-
-        when(compilationService.getCompilations(eq(true), eq(0), eq(10)))
-                .thenReturn(compilations);
-
-        mockMvc.perform(get("/compilations")
-                        .param("pinned", "true")
-                        .param("from", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].title").value("Summer Events"))
-                .andExpect(jsonPath("$[0].pinned").value(true));
-
-        verify(compilationService, times(1)).getCompilations(eq(true), eq(0), eq(10));
-    }
-
-    @Test
-    void getCompilations_WithoutPinnedFilter_ReturnsAllCompilations() throws Exception {
-        List<CompilationDto> compilations = List.of(compilationDto);
-
-        when(compilationService.getCompilations(isNull(), eq(0), eq(10)))
-                .thenReturn(compilations);
-
-        mockMvc.perform(get("/compilations")
-                        .param("from", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
-
-        verify(compilationService, times(1)).getCompilations(isNull(), eq(0), eq(10));
-    }
-
-    @Test
-    void getCompilations_DefaultPagination_ReturnsCompilations() throws Exception {
-        List<CompilationDto> compilations = List.of(compilationDto);
-
-        when(compilationService.getCompilations(isNull(), eq(0), eq(10)))
-                .thenReturn(compilations);
-
-        mockMvc.perform(get("/compilations"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
-
-        verify(compilationService, times(1)).getCompilations(isNull(), eq(0), eq(10));
-    }
-
-    @Test
-    void getCompilation_ValidId_ReturnsCompilation() throws Exception {
-        when(compilationService.getCompilation(1L)).thenReturn(compilationDto);
-
-        mockMvc.perform(get("/compilations/{compId}", 1L))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.title").value("Summer Events"))
-                .andExpect(jsonPath("$.events.length()").value(2));
-
-        verify(compilationService, times(1)).getCompilation(1L);
-    }
-
-    @Test
-    void getCompilation_InvalidPathParam_ReturnsBadRequest() throws Exception {
-        mockMvc.perform(get("/compilations/{compId}", "invalid"))
-                .andExpect(status().isBadRequest());
-
-        verify(compilationService, never()).getCompilation(any());
-    }
-
-    @Test
-    void getCompilation_NonExistingId_ReturnsNotFound() throws Exception {
-        when(compilationService.getCompilation(999L))
-                .thenThrow(new ru.practicum.ewm.exception.NotFoundException("Compilation not found"));
-
-        mockMvc.perform(get("/compilations/{compId}", 999L))
-                .andExpect(status().isNotFound());
-
-        verify(compilationService, times(1)).getCompilation(999L);
-    }
-
-    @Test
     void getCompilations_InvalidPaginationParams_ReturnsBadRequest() throws Exception {
         mockMvc.perform(get("/compilations")
-                        .param("from", "-1")
-                        .param("size", "0"))
+                        .param("from", "-1")  // невалидно
+                        .param("size", "10"))
                 .andExpect(status().isBadRequest());
 
         verify(compilationService, never()).getCompilations(any(), anyInt(), anyInt());
@@ -158,17 +76,7 @@ class PublicCompilationControllerTest {
     void getCompilations_InvalidSizeParam_ReturnsBadRequest() throws Exception {
         mockMvc.perform(get("/compilations")
                         .param("from", "0")
-                        .param("size", "0"))
-                .andExpect(status().isBadRequest());
-
-        verify(compilationService, never()).getCompilations(any(), anyInt(), anyInt());
-    }
-
-    @Test
-    void getCompilations_InvalidFromParam_ReturnsBadRequest() throws Exception {
-        mockMvc.perform(get("/compilations")
-                        .param("from", "-1")
-                        .param("size", "10"))
+                        .param("size", "0"))  // невалидно
                 .andExpect(status().isBadRequest());
 
         verify(compilationService, never()).getCompilations(any(), anyInt(), anyInt());

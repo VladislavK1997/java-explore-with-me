@@ -84,8 +84,8 @@ public class ErrorHandler {
     public ApiError handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.error("Validation error: {}", e.getMessage(), e);
         String message = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> String.format("Field: %s. Error: %s",
-                        error.getField(), error.getDefaultMessage()))
+                .map(error -> String.format("Field: %s. Error: %s. Value: %s",
+                        error.getField(), error.getDefaultMessage(), error.getRejectedValue()))
                 .findFirst()
                 .orElse("Validation failed");
         return new ApiError(
@@ -102,8 +102,8 @@ public class ErrorHandler {
     public ApiError handleBindException(BindException e) {
         log.error("Bind error: {}", e.getMessage(), e);
         String message = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> String.format("Field: %s. Error: %s",
-                        error.getField(), error.getDefaultMessage()))
+                .map(error -> String.format("Field: %s. Error: %s. Value: %s",
+                        error.getField(), error.getDefaultMessage(), error.getRejectedValue()))
                 .findFirst()
                 .orElse("Bind failed");
         return new ApiError(
@@ -173,9 +173,13 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         log.error("HTTP message not readable: {}", e.getMessage(), e);
+        String message = "Invalid request body format";
+        if (e.getMessage() != null && e.getMessage().contains("DateTimeParseException")) {
+            message = "Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss";
+        }
         return new ApiError(
                 List.of(e.toString()),
-                "Invalid request body format",
+                message,
                 "Incorrectly made request.",
                 "BAD_REQUEST",
                 LocalDateTime.now()
