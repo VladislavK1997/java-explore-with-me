@@ -98,7 +98,7 @@ class MapperTest {
         assertEquals(EventState.PENDING, event.getState());
         assertNotNull(event.getCreatedOn());
         assertEquals(0, event.getConfirmedRequests());
-        assertNull(event.getViews());
+        assertEquals(0L, event.getViews());
     }
 
     @Test
