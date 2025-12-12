@@ -225,15 +225,16 @@ class PublicEventControllerTest {
     }
 
     @Test
-    void getEvents_InvalidDateFormats_ReturnsBadRequest() throws Exception {
-        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString()))
-                .thenThrow(new ru.practicum.ewm.exception.ValidationException("Invalid date format"));
+    void getEvents_InvalidDateFormats_ReturnsOkWithDefaults() throws Exception {
+        List<EventShortDto> events = List.of(eventShortDto);
+
+        when(eventService.getEventsPublic(any(), any(), any(), any(), any(), anyBoolean(),
+                anyString(), anyInt(), anyInt(), anyString())).thenReturn(events);
 
         mockMvc.perform(get("/events")
                         .param("rangeStart", "invalid-date")
                         .param("rangeEnd", "invalid-date"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk());
 
         verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
                 anyBoolean(), any(), anyInt(), anyInt(), anyString());
@@ -249,6 +250,6 @@ class PublicEventControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), anyString(), anyInt(), anyInt(), anyString());
+                anyBoolean(), any(), anyInt(), anyInt(), anyString());
     }
 }

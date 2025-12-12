@@ -208,10 +208,6 @@ public class EventServiceImpl implements EventService {
                                                String sort, Integer from, Integer size, String ip) {
         validatePagination(from, size);
 
-        if (text != null && text.length() > 7000) {
-            throw new ValidationException("Text length must be less than or equal to 7000 characters");
-        }
-
         if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
             throw new ValidationException("Invalid sort parameter: " + sort);
         }
