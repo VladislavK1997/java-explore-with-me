@@ -89,6 +89,18 @@ class ErrorHandlerTest {
     }
 
     @Test
+    void handleNullPointerException_shouldReturnInternalServerError() throws Exception {
+        mockMvc.perform(get("/test/null-pointer"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void handleMissingServletRequestParameterException_shouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/test/missing-param"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void handleGenericException_shouldReturnInternalServerError() throws Exception {
         when(userService.createUser(any(NewUserRequest.class)))
                 .thenThrow(new RuntimeException("Unexpected error"));
@@ -97,11 +109,5 @@ class ErrorHandlerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"John Doe\",\"email\":\"john@example.com\"}"))
                 .andExpect(status().isInternalServerError());
-    }
-
-    @Test
-    void handleMissingServletRequestParameterException_shouldReturnBadRequest() throws Exception {
-        mockMvc.perform(get("/test/missing-param"))
-                .andExpect(status().isBadRequest());
     }
 }

@@ -16,7 +16,8 @@ public class ApplicationConfig {
                 .setMatchingStrategy(MatchingStrategies.STRICT)
                 .setFieldMatchingEnabled(true)
                 .setSkipNullEnabled(true)
-                .setFieldAccessLevel(AccessLevel.PRIVATE);
+                .setFieldAccessLevel(AccessLevel.PRIVATE)
+                .setAmbiguityIgnored(true);
         return modelMapper;
     }
 }

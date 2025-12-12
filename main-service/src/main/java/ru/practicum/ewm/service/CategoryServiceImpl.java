@@ -13,6 +13,7 @@ import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,7 +46,13 @@ public class CategoryServiceImpl implements CategoryService {
 
         int pageNumber = from / size;
         PageRequest page = PageRequest.of(pageNumber, size);
-        return categoryRepository.findAll(page).getContent().stream()
+        List<Category> categories = categoryRepository.findAll(page).getContent();
+
+        if (categories.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return categories.stream()
                 .map(CategoryMapper::toCategoryDto)
                 .collect(Collectors.toList());
     }

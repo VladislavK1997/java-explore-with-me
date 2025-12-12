@@ -10,4 +10,9 @@ public class TestController {
     public String testMissingParam(@RequestParam String requiredParam) {
         return "OK";
     }
+
+    @GetMapping("/test/null-pointer")
+    public String testNullPointer() {
+        throw new NullPointerException("Test NPE");
+    }
 }

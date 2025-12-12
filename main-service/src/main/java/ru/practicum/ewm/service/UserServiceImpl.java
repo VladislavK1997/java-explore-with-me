@@ -12,6 +12,7 @@ import ru.practicum.ewm.mapper.UserMapper;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.UserRepository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,6 +54,10 @@ public class UserServiceImpl implements UserService {
             users = userRepository.findByIdIn(ids, page);
         } else {
             users = userRepository.findAll(page).getContent();
+        }
+
+        if (users == null || users.isEmpty()) {
+            return Collections.emptyList();
         }
 
         return users.stream()

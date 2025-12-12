@@ -246,9 +246,10 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Parameter 'size' must be greater than 0");
         }
 
-        if (sort != null) {
-            sort = sort.toUpperCase();
-            if (!sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
+        String sortParam = null;
+        if (sort != null && !sort.isEmpty()) {
+            sortParam = sort.toUpperCase();
+            if (!sortParam.equals("EVENT_DATE") && !sortParam.equals("VIEWS")) {
                 throw new ValidationException("Invalid sort parameter: " + sort);
             }
         }
@@ -266,7 +267,7 @@ public class EventServiceImpl implements EventService {
 
         int pageNumber = from / size;
         PageRequest page;
-        if (sort != null && sort.equals("EVENT_DATE")) {
+        if (sortParam != null && sortParam.equals("EVENT_DATE")) {
             page = PageRequest.of(pageNumber, size, Sort.by("eventDate").descending());
         } else {
             page = PageRequest.of(pageNumber, size);
@@ -274,13 +275,17 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events;
         try {
-            if (end != null) {
-                events = eventRepository.findEventsPublic(text, categories, paid, start, end, EventState.PUBLISHED, page);
-            } else {
-                events = eventRepository.findEventsPublic(text, categories, paid, start, null, EventState.PUBLISHED, page);
-            }
+            events = eventRepository.findEventsPublic(
+                    text != null && !text.isEmpty() ? text : null,
+                    categories != null && !categories.isEmpty() ? categories : null,
+                    paid,
+                    start,
+                    end,
+                    EventState.PUBLISHED,
+                    page
+            );
         } catch (Exception e) {
-            log.error("Error fetching events: {}", e.getMessage(), e);
+            log.error("Error fetching events: {}", e.getMessage());
             throw new ValidationException("Error fetching events: " + e.getMessage());
         }
 
@@ -306,7 +311,7 @@ public class EventServiceImpl implements EventService {
                 })
                 .collect(Collectors.toList());
 
-        if (sort != null && sort.equals("VIEWS")) {
+        if (sortParam != null && sortParam.equals("VIEWS")) {
             result.sort(Comparator.comparing(EventShortDto::getViews).reversed());
         }
 

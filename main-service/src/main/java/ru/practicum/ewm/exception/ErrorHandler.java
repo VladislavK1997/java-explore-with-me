@@ -27,7 +27,7 @@ public class ErrorHandler {
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError handleNotFoundException(NotFoundException e) {
-        log.error("Not found: {}", e.getMessage(), e);
+        log.error("Not found: {}", e.getMessage());
         return new ApiError(
                 List.of(e.toString()),
                 e.getMessage(),
@@ -40,7 +40,7 @@ public class ErrorHandler {
     @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleValidationException(ValidationException e) {
-        log.error("Validation error: {}", e.getMessage(), e);
+        log.error("Validation error: {}", e.getMessage());
         return new ApiError(
                 List.of(e.toString()),
                 e.getMessage(),
@@ -53,7 +53,7 @@ public class ErrorHandler {
     @ExceptionHandler(ConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflictException(ConflictException e) {
-        log.error("Conflict: {}", e.getMessage(), e);
+        log.error("Conflict: {}", e.getMessage());
         return new ApiError(
                 List.of(e.toString()),
                 e.getMessage(),
@@ -66,7 +66,7 @@ public class ErrorHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleConstraintViolationException(ConstraintViolationException e) {
-        log.error("Constraint violation: {}", e.getMessage(), e);
+        log.error("Constraint violation: {}", e.getMessage());
         String message = e.getConstraintViolations().stream()
                 .map(ConstraintViolation::getMessage)
                 .collect(Collectors.joining(", "));
@@ -82,7 +82,7 @@ public class ErrorHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        log.error("Validation error: {}", e.getMessage(), e);
+        log.error("Validation error: {}", e.getMessage());
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> String.format("Field: %s. Error: %s",
                         error.getField(), error.getDefaultMessage()))
@@ -100,7 +100,7 @@ public class ErrorHandler {
     @ExceptionHandler(BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBindException(BindException e) {
-        log.error("Bind error: {}", e.getMessage(), e);
+        log.error("Bind error: {}", e.getMessage());
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> String.format("Field: %s. Error: %s",
                         error.getField(), error.getDefaultMessage()))
@@ -118,16 +118,18 @@ public class ErrorHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-        log.error("Data integrity violation: {}", e.getMessage(), e);
+        log.error("Data integrity violation: {}", e.getMessage());
         String message = "Integrity constraint has been violated.";
-        if (e.getMessage() != null && e.getMessage().contains("uq_category_name")) {
-            message = "Category name must be unique";
-        } else if (e.getMessage() != null && e.getMessage().contains("uq_email")) {
-            message = "Email must be unique";
-        } else if (e.getMessage() != null && e.getMessage().contains("uq_compilation_name")) {
-            message = "Compilation title must be unique";
-        } else if (e.getMessage() != null && e.getMessage().contains("uq_request")) {
-            message = "Duplicate request";
+        if (e.getMessage() != null) {
+            if (e.getMessage().contains("uq_category_name")) {
+                message = "Category name must be unique";
+            } else if (e.getMessage().contains("uq_email")) {
+                message = "Email must be unique";
+            } else if (e.getMessage().contains("uq_compilation_name")) {
+                message = "Compilation title must be unique";
+            } else if (e.getMessage().contains("uq_request")) {
+                message = "Duplicate request";
+            }
         }
         return new ApiError(
                 List.of(e.toString()),
@@ -141,7 +143,7 @@ public class ErrorHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
-        log.error("Method argument type mismatch: {}", e.getMessage(), e);
+        log.error("Method argument type mismatch: {}", e.getMessage());
         String message = String.format("Parameter '%s' should be of type %s",
                 e.getName(), e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown");
         return new ApiError(
@@ -156,7 +158,7 @@ public class ErrorHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
-        log.error("Missing servlet request parameter: {}", e.getMessage(), e);
+        log.error("Missing servlet request parameter: {}", e.getMessage());
         return new ApiError(
                 List.of(e.toString()),
                 e.getMessage(),
@@ -169,7 +171,7 @@ public class ErrorHandler {
     @ExceptionHandler(DateTimeParseException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleDateTimeParseException(DateTimeParseException e) {
-        log.error("Date time parse error: {}", e.getMessage(), e);
+        log.error("Date time parse error: {}", e.getMessage());
         return new ApiError(
                 List.of(e.toString()),
                 "Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss",
@@ -182,7 +184,7 @@ public class ErrorHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        log.error("HTTP message not readable: {}", e.getMessage(), e);
+        log.error("HTTP message not readable: {}", e.getMessage());
         return new ApiError(
                 List.of(e.toString()),
                 "Invalid request body format",
@@ -195,7 +197,7 @@ public class ErrorHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleIllegalArgumentException(IllegalArgumentException e) {
-        log.error("Illegal argument: {}", e.getMessage(), e);
+        log.error("Illegal argument: {}", e.getMessage());
         return new ApiError(
                 List.of(e.toString()),
                 e.getMessage(),
@@ -208,7 +210,7 @@ public class ErrorHandler {
     @ExceptionHandler(IllegalStateException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleIllegalStateException(IllegalStateException e) {
-        log.error("Illegal state: {}", e.getMessage(), e);
+        log.error("Illegal state: {}", e.getMessage());
         return new ApiError(
                 List.of(e.toString()),
                 e.getMessage(),
@@ -218,26 +220,13 @@ public class ErrorHandler {
         );
     }
 
-    @ExceptionHandler(NullPointerException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiError handleNullPointerException(NullPointerException e) {
-        log.error("Null pointer exception: {}", e.getMessage(), e);
-        return new ApiError(
-                List.of(e.toString()),
-                e.getMessage(),
-                "Internal server error",
-                "INTERNAL_SERVER_ERROR",
-                LocalDateTime.now()
-        );
-    }
-
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleOtherExceptions(Exception e) {
-        log.error("Internal server error: {}", e.getMessage(), e);
+        log.error("Internal server error: {}", e.getMessage());
         return new ApiError(
                 List.of(e.toString()),
-                e.getMessage(),
+                "Internal server error",
                 "Internal server error",
                 "INTERNAL_SERVER_ERROR",
                 LocalDateTime.now()
