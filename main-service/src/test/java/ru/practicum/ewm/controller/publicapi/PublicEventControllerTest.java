@@ -240,7 +240,6 @@ class PublicEventControllerTest {
                 anyBoolean(), any(), anyInt(), anyInt(), anyString());
     }
 
-
     @Test
     void getEvents_TextTooLong_ReturnsBadRequest() throws Exception {
         String longText = "a".repeat(7001);

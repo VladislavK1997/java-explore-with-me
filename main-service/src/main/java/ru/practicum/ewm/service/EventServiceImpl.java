@@ -222,15 +222,8 @@ public class EventServiceImpl implements EventService {
             page = PageRequest.of(pageNumber, size);
         }
 
-        LocalDateTime start = null;
-        LocalDateTime end = null;
-
-        try {
-            start = parseDateTime(rangeStart);
-            end = parseDateTime(rangeEnd);
-        } catch (ValidationException e) {
-            log.debug("Invalid date format, using default values");
-        }
+        LocalDateTime start = parseDateTime(rangeStart);
+        LocalDateTime end = parseDateTime(rangeEnd);
 
         if (start == null) {
             start = LocalDateTime.now();
@@ -288,7 +281,8 @@ public class EventServiceImpl implements EventService {
             try {
                 return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             } catch (DateTimeParseException e2) {
-                throw new ValidationException("Invalid date format: " + dateTime + ". Expected format: yyyy-MM-dd HH:mm:ss");
+                log.debug("Invalid date format: {}, using null", dateTime);
+                return null;
             }
         }
     }
