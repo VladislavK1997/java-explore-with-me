@@ -25,7 +25,7 @@ public class PublicEventController {
                                          @RequestParam(required = false) Boolean paid,
                                          @RequestParam(required = false) String rangeStart,
                                          @RequestParam(required = false) String rangeEnd,
-                                         @RequestParam(required = false) Boolean onlyAvailable,
+                                         @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,
                                          @RequestParam(required = false) String sort,
                                          @RequestParam(defaultValue = "0", required = false) Integer from,
                                          @RequestParam(defaultValue = "10", required = false) Integer size,
@@ -36,7 +36,7 @@ public class PublicEventController {
 
         String ip = request.getRemoteAddr();
         return eventService.getEventsPublic(text, categories, paid, rangeStart, rangeEnd,
-                onlyAvailable != null ? onlyAvailable : false, sort, from, size, ip);
+                onlyAvailable, sort, from, size, ip);
     }
 
     @GetMapping("/{id}")

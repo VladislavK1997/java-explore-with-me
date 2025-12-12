@@ -287,8 +287,7 @@ public class EventServiceImpl implements EventService {
         try {
             return LocalDateTime.parse(dateTime, FORMATTER);
         } catch (DateTimeParseException e) {
-            log.debug("Invalid date format: {}, expected format: yyyy-MM-dd HH:mm:ss", dateTime);
-            return null;
+            throw new ValidationException("Invalid date format: " + dateTime + ", expected format: yyyy-MM-dd HH:mm:ss");
         }
     }
 
