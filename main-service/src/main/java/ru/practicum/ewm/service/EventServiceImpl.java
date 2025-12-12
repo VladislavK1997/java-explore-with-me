@@ -29,7 +29,6 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final StatsService statsService;
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
@@ -37,7 +36,7 @@ public class EventServiceImpl implements EventService {
         validatePagination(from, size);
 
         int pageNumber = from / size;
-        PageRequest page = PageRequest.of(pageNumber, size, Sort.by("id").descending());
+        PageRequest page = PageRequest.of(pageNumber, size);
 
         List<EventState> eventStates = null;
         if (states != null && !states.isEmpty()) {
@@ -114,7 +113,7 @@ public class EventServiceImpl implements EventService {
         validatePagination(from, size);
 
         int pageNumber = from / size;
-        PageRequest page = PageRequest.of(pageNumber, size, Sort.by("id").descending());
+        PageRequest page = PageRequest.of(pageNumber, size);
         List<Event> events = eventRepository.findByInitiatorId(userId, page);
 
         if (events.isEmpty()) {
@@ -220,7 +219,7 @@ public class EventServiceImpl implements EventService {
         if ("EVENT_DATE".equals(sort)) {
             page = PageRequest.of(pageNumber, size, Sort.by("eventDate").descending());
         } else {
-            page = PageRequest.of(pageNumber, size, Sort.by("id").descending());
+            page = PageRequest.of(pageNumber, size);
         }
 
         LocalDateTime start = parseDateTime(rangeStart);
@@ -276,11 +275,22 @@ public class EventServiceImpl implements EventService {
             return null;
         }
 
-        try {
-            return LocalDateTime.parse(dateTime, FORMATTER);
-        } catch (DateTimeParseException e) {
-            throw new ValidationException("Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter[] formatters = {
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"),
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        };
+
+        for (DateTimeFormatter formatter : formatters) {
+            try {
+                return LocalDateTime.parse(dateTime, formatter);
+            } catch (DateTimeParseException e) {
+            }
         }
+
+        log.debug("Invalid date format: {}, using null", dateTime);
+        return null;
     }
 
     private void validatePagination(Integer from, Integer size) {
