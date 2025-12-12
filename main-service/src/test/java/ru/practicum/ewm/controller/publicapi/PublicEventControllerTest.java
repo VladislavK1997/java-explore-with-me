@@ -92,19 +92,63 @@ class PublicEventControllerTest {
                         .param("text", "test")
                         .param("categories", "1", "2")
                         .param("paid", "true")
-                        .param("rangeStart", "2024-01-01T00:00:00")
-                        .param("rangeEnd", "2024-12-31T23:59:59")
+                        .param("rangeStart", "2024-01-01 00:00:00")
+                        .param("rangeEnd", "2024-12-31 23:59:59")
                         .param("onlyAvailable", "false")
                         .param("sort", "EVENT_DATE")
                         .param("from", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].title").value("Test Event"));
 
         verify(eventService, times(1)).getEventsPublic(
                 eq("test"), any(), eq(true),
                 any(), any(),
                 eq(false), eq("EVENT_DATE"), eq(0), eq(10), anyString());
+    }
+
+    @Test
+    void getEvents_TextTooLong_ReturnsBadRequest() throws Exception {
+        String longText = "a".repeat(7001);
+
+        mockMvc.perform(get("/events")
+                        .param("text", longText))
+                .andExpect(status().isBadRequest());
+
+        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString());
+    }
+
+    @Test
+    void getEvents_InvalidDateFormats_ReturnsOkWithDefaults() throws Exception {
+        List<EventShortDto> events = List.of(eventShortDto);
+
+        when(eventService.getEventsPublic(any(), any(), any(), any(), any(), anyBoolean(),
+                anyString(), anyInt(), anyInt(), anyString())).thenReturn(events);
+
+        mockMvc.perform(get("/events")
+                        .param("rangeStart", "invalid-date")
+                        .param("rangeEnd", "invalid-date"))
+                .andExpect(status().isOk());
+
+        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString());
+    }
+
+    @Test
+    void getEvents_InvalidSortParameter_ReturnsBadRequest() throws Exception {
+        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString()))
+                .thenThrow(new ru.practicum.ewm.exception.ValidationException("Invalid sort parameter"));
+
+        mockMvc.perform(get("/events")
+                        .param("sort", "INVALID_SORT"))
+                .andExpect(status().isBadRequest());
+
+        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), anyString(), anyInt(), anyInt(), anyString());
     }
 
     @Test
@@ -206,47 +250,5 @@ class PublicEventControllerTest {
         verify(eventService, times(1)).getEventsPublic(
                 isNull(), isNull(), isNull(), any(), isNull(),
                 eq(true), isNull(), eq(0), eq(10), anyString());
-    }
-
-    @Test
-    void getEvents_InvalidSortParameter_ReturnsBadRequest() throws Exception {
-        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString()))
-                .thenThrow(new ru.practicum.ewm.exception.ValidationException("Invalid sort parameter"));
-
-        mockMvc.perform(get("/events")
-                        .param("sort", "INVALID_SORT"))
-                .andExpect(status().isBadRequest());
-
-        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), anyString(), anyInt(), anyInt(), anyString());
-    }
-
-    @Test
-    void getEvents_InvalidDateFormats_ReturnsOkWithDefaults() throws Exception {
-        List<EventShortDto> events = List.of(eventShortDto);
-
-        when(eventService.getEventsPublic(any(), any(), any(), any(), any(), anyBoolean(),
-                anyString(), anyInt(), anyInt(), anyString())).thenReturn(events);
-
-        mockMvc.perform(get("/events")
-                        .param("rangeStart", "invalid-date")
-                        .param("rangeEnd", "invalid-date"))
-                .andExpect(status().isOk());
-
-        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString());
-    }
-
-    @Test
-    void getEvents_TextTooLong_ReturnsBadRequest() throws Exception {
-        String longText = "a".repeat(7001);
-
-        mockMvc.perform(get("/events")
-                        .param("text", longText))
-                .andExpect(status().isBadRequest());
-
-        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString());
     }
 }

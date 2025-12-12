@@ -275,16 +275,22 @@ public class EventServiceImpl implements EventService {
             return null;
         }
 
-        try {
-            return LocalDateTime.parse(dateTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-        } catch (DateTimeParseException e) {
+        DateTimeFormatter[] formatters = {
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"),
+                DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        };
+
+        for (DateTimeFormatter formatter : formatters) {
             try {
-                return LocalDateTime.parse(dateTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-            } catch (DateTimeParseException e2) {
-                log.debug("Invalid date format: {}, using null", dateTime);
-                return null;
+                return LocalDateTime.parse(dateTime, formatter);
+            } catch (DateTimeParseException e) {
             }
         }
+
+        log.debug("Invalid date format: {}, using null", dateTime);
+        return null;
     }
 
     private void validatePagination(Integer from, Integer size) {
