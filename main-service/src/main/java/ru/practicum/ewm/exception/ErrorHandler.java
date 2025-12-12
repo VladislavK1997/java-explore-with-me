@@ -126,6 +126,8 @@ public class ErrorHandler {
             message = "Email must be unique";
         } else if (e.getMessage() != null && e.getMessage().contains("uq_compilation_name")) {
             message = "Compilation title must be unique";
+        } else if (e.getMessage() != null && e.getMessage().contains("uq_request")) {
+            message = "Duplicate request";
         }
         return new ApiError(
                 List.of(e.toString()),

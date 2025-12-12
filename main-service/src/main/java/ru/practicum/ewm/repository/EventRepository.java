@@ -48,4 +48,18 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByIdIn(List<Long> eventIds);
 
     Long countByCategoryId(Long categoryId);
+
+    @Query("SELECT e FROM Event e " +
+            "WHERE e.state = :publishedState " +
+            "AND (:text IS NULL OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) " +
+            "OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))) " +
+            "AND (:categories IS NULL OR e.category.id IN :categories) " +
+            "AND (:paid IS NULL OR e.paid = :paid) " +
+            "AND e.eventDate >= :rangeStart")
+    List<Event> findEventsPublicWithoutRangeEnd(@Param("text") String text,
+                                                @Param("categories") List<Long> categories,
+                                                @Param("paid") Boolean paid,
+                                                @Param("rangeStart") LocalDateTime rangeStart,
+                                                @Param("publishedState") EventState publishedState,
+                                                Pageable pageable);
 }

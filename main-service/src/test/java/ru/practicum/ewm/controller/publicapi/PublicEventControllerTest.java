@@ -115,6 +115,42 @@ class PublicEventControllerTest {
     }
 
     @Test
+    void getEvents_WithOnlyAvailableFalse_ShouldPassFalseToService() throws Exception {
+        List<EventShortDto> events = List.of(eventShortDto);
+
+        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), any(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
+
+        mockMvc.perform(get("/events")
+                        .param("onlyAvailable", "false"))
+                .andExpect(status().isOk());
+
+        verify(eventService, times(1)).getEventsPublic(
+                isNull(), isNull(), isNull(), any(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString());
+    }
+
+    @Test
+    void getEvents_WithInvalidFromParam_ShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/events")
+                        .param("from", "-1"))
+                .andExpect(status().isBadRequest());
+
+        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString());
+    }
+
+    @Test
+    void getEvents_WithInvalidSizeParam_ShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/events")
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest());
+
+        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString());
+    }
+
+    @Test
     void getEvents_WithInvalidDateFormat_ShouldReturnBadRequest() throws Exception {
         when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
                 anyBoolean(), any(), anyInt(), anyInt(), anyString()))
@@ -134,5 +170,28 @@ class PublicEventControllerTest {
         mockMvc.perform(get("/events")
                         .param("sort", "INVALID"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getEvent_ValidId_ReturnsEvent() throws Exception {
+        when(eventService.getEventPublic(eq(1L), anyString())).thenReturn(eventFullDto);
+
+        mockMvc.perform(get("/events/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.title").value("Test Event"));
+
+        verify(eventService, times(1)).getEventPublic(eq(1L), anyString());
+    }
+
+    @Test
+    void getEvent_EventNotFound_ReturnsNotFound() throws Exception {
+        when(eventService.getEventPublic(eq(999L), anyString()))
+                .thenThrow(new ru.practicum.ewm.exception.NotFoundException("Event with id=999 was not found"));
+
+        mockMvc.perform(get("/events/999"))
+                .andExpect(status().isNotFound());
+
+        verify(eventService, times(1)).getEventPublic(eq(999L), anyString());
     }
 }

@@ -64,7 +64,7 @@ public class EventServiceImpl implements EventService {
         List<Event> events = eventRepository.findEventsByAdmin(users, eventStates, categories, start, end, page);
 
         if (events.isEmpty()) {
-            return List.of();
+            return Collections.emptyList();
         }
 
         Map<Long, Long> views = statsService.getViews(events.stream()
@@ -134,7 +134,7 @@ public class EventServiceImpl implements EventService {
         List<Event> events = eventRepository.findByInitiatorId(userId, page);
 
         if (events.isEmpty()) {
-            return List.of();
+            return Collections.emptyList();
         }
 
         Map<Long, Long> views = statsService.getViews(events.stream()
@@ -237,15 +237,8 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Invalid sort parameter: " + sort);
         }
 
-        LocalDateTime start = null;
-        LocalDateTime end = null;
-
-        try {
-            start = parseDateTime(rangeStart);
-            end = parseDateTime(rangeEnd);
-        } catch (ValidationException e) {
-            throw new ValidationException("Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss");
-        }
+        LocalDateTime start = parseDateTime(rangeStart);
+        LocalDateTime end = parseDateTime(rangeEnd);
 
         if (start == null) {
             start = LocalDateTime.now();
@@ -263,7 +256,12 @@ public class EventServiceImpl implements EventService {
             page = PageRequest.of(pageNumber, size);
         }
 
-        List<Event> events = eventRepository.findEventsPublic(text, categories, paid, start, end, EventState.PUBLISHED, page);
+        List<Event> events;
+        if (end != null) {
+            events = eventRepository.findEventsPublic(text, categories, paid, start, end, EventState.PUBLISHED, page);
+        } else {
+            events = eventRepository.findEventsPublic(text, categories, paid, start, null, EventState.PUBLISHED, page);
+        }
 
         if (Boolean.TRUE.equals(onlyAvailable)) {
             events = events.stream()
@@ -273,7 +271,7 @@ public class EventServiceImpl implements EventService {
         }
 
         if (events.isEmpty()) {
-            return List.of();
+            return Collections.emptyList();
         }
 
         Map<Long, Long> views = statsService.getViews(events.stream()
