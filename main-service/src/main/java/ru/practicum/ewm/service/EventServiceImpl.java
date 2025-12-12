@@ -34,9 +34,8 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                                String rangeStart, String rangeEnd, Integer from, Integer size) {
-        // Установка значений по умолчанию
-        from = (from == null) ? 0 : from;
-        size = (size == null) ? 10 : size;
+        if (from == null) from = 0;
+        if (size == null) size = 10;
 
         if (from < 0) {
             throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
@@ -90,7 +89,6 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
-        // Проверка даты публикации
         if (updateRequest.getStateAction() != null) {
             switch (updateRequest.getStateAction()) {
                 case "PUBLISH_EVENT":
@@ -114,7 +112,6 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        // Проверка даты события
         if (updateRequest.getEventDate() != null) {
             if (updateRequest.getEventDate().isBefore(LocalDateTime.now())) {
                 throw new ValidationException("Event date must be in the future");
@@ -132,9 +129,8 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size) {
-        // Установка значений по умолчанию
-        from = (from == null) ? 0 : from;
-        size = (size == null) ? 10 : size;
+        if (from == null) from = 0;
+        if (size == null) size = 10;
 
         if (from < 0) {
             throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
@@ -172,7 +168,6 @@ public class EventServiceImpl implements EventService {
         Category category = categoryRepository.findById(newEventDto.getCategory())
                 .orElseThrow(() -> new NotFoundException("Category with id=" + newEventDto.getCategory() + " was not found"));
 
-        // Проверка даты события
         if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
             throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + newEventDto.getEventDate());
         }
@@ -221,7 +216,6 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        // Проверка даты события
         if (updateRequest.getEventDate() != null) {
             if (updateRequest.getEventDate().isBefore(LocalDateTime.now().plusHours(2))) {
                 throw new ValidationException("Field: eventDate. Error: должно содержать дату, которая еще не наступила. Value: " + updateRequest.getEventDate());
@@ -241,10 +235,9 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEventsPublic(String text, List<Long> categories, Boolean paid,
                                                String rangeStart, String rangeEnd, Boolean onlyAvailable,
                                                String sort, Integer from, Integer size, String ip) {
-        // Установка значений по умолчанию
-        from = (from == null) ? 0 : from;
-        size = (size == null) ? 10 : size;
-        onlyAvailable = (onlyAvailable == null) ? false : onlyAvailable;
+        if (from == null) from = 0;
+        if (size == null) size = 10;
+        if (onlyAvailable == null) onlyAvailable = false;
 
         if (from < 0) {
             throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
@@ -253,7 +246,6 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Parameter 'size' must be greater than 0");
         }
 
-        // Валидация параметра сортировки
         if (sort != null) {
             sort = sort.toUpperCase();
             if (!sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
@@ -318,7 +310,6 @@ public class EventServiceImpl implements EventService {
             result.sort(Comparator.comparing(EventShortDto::getViews).reversed());
         }
 
-        // Сохранение статистики
         try {
             statsService.saveHit("/events", ip);
         } catch (Exception e) {

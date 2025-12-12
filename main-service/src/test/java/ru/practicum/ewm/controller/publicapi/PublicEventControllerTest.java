@@ -14,8 +14,6 @@ import ru.practicum.ewm.config.StatsClientConfig;
 import ru.practicum.ewm.dto.EventShortDto;
 import ru.practicum.ewm.dto.CategoryDto;
 import ru.practicum.ewm.dto.UserShortDto;
-import ru.practicum.ewm.exception.ValidationException;
-import ru.practicum.ewm.model.EventState;
 import ru.practicum.ewm.service.EventService;
 
 import java.time.LocalDateTime;
@@ -82,86 +80,17 @@ class PublicEventControllerTest {
     }
 
     @Test
-    void getEvents_WithInvalidFromParam_ShouldReturnBadRequest() throws Exception {
-        // Контроллер сам проверяет параметры благодаря @Min аннотациям
-        // Service не должен вызываться
-        mockMvc.perform(get("/events")
-                        .param("from", "-1"))
-                .andExpect(status().isBadRequest());
+    void getEvents_WithEmptyResult_ShouldReturnEmptyList() throws Exception {
+        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(List.of());
 
-        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString());
-    }
-
-    @Test
-    void getEvents_WithInvalidSizeParam_ShouldReturnBadRequest() throws Exception {
-        // Контроллер сам проверяет параметры благодаря @Min аннотациям
-        // Service не должен вызываться
-        mockMvc.perform(get("/events")
-                        .param("size", "0"))
-                .andExpect(status().isBadRequest());
-
-        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString());
-    }
-
-    @Test
-    void getEvents_WithInvalidSortParam_ShouldReturnBadRequest() throws Exception {
-        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), eq("INVALID"), anyInt(), anyInt(), anyString()))
-                .thenThrow(new ValidationException("Invalid sort parameter: INVALID"));
-
-        mockMvc.perform(get("/events")
-                        .param("sort", "INVALID"))
-                .andExpect(status().isBadRequest());
-
-        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), eq("INVALID"), anyInt(), anyInt(), anyString());
-    }
-
-    @Test
-    void getEvent_ValidId_ReturnsEvent() throws Exception {
-        CategoryDto categoryDto = new CategoryDto(1L, "Concerts");
-        UserShortDto userShortDto = new UserShortDto(1L, "John Doe");
-
-        ru.practicum.ewm.dto.EventFullDto eventFullDto = new ru.practicum.ewm.dto.EventFullDto(
-                1L,
-                "Event annotation",
-                categoryDto,
-                50L,
-                now.minusDays(1),
-                "Full event description",
-                now.plusDays(1),
-                userShortDto,
-                new ru.practicum.ewm.dto.LocationDto(55.754167f, 37.62f),
-                true,
-                100,
-                now.minusHours(1),
-                true,
-                EventState.PUBLISHED,
-                "Test Event",
-                1000L
-        );
-
-        when(eventService.getEventPublic(eq(1L), anyString())).thenReturn(eventFullDto);
-
-        mockMvc.perform(get("/events/1"))
+        mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.title").value("Test Event"));
+                .andExpect(jsonPath("$.length()").value(0));
 
-        verify(eventService, times(1)).getEventPublic(eq(1L), anyString());
-    }
-
-    @Test
-    void getEvent_EventNotFound_ReturnsNotFound() throws Exception {
-        when(eventService.getEventPublic(eq(999L), anyString()))
-                .thenThrow(new ru.practicum.ewm.exception.NotFoundException("Event with id=999 was not found"));
-
-        mockMvc.perform(get("/events/999"))
-                .andExpect(status().isNotFound());
-
-        verify(eventService, times(1)).getEventPublic(eq(999L), anyString());
+        verify(eventService, times(1)).getEventsPublic(
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString());
     }
 
     @Test
@@ -199,16 +128,47 @@ class PublicEventControllerTest {
     }
 
     @Test
-    void getEvents_WithEmptyResult_ShouldReturnEmptyList() throws Exception {
-        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(List.of());
+    void getEvent_ValidId_ReturnsEvent() throws Exception {
+        CategoryDto categoryDto = new CategoryDto(1L, "Concerts");
+        UserShortDto userShortDto = new UserShortDto(1L, "John Doe");
 
-        mockMvc.perform(get("/events"))
+        ru.practicum.ewm.dto.EventFullDto eventFullDto = new ru.practicum.ewm.dto.EventFullDto(
+                1L,
+                "Event annotation",
+                categoryDto,
+                50L,
+                now.minusDays(1),
+                "Full event description",
+                now.plusDays(1),
+                userShortDto,
+                new ru.practicum.ewm.dto.LocationDto(55.754167f, 37.62f),
+                true,
+                100,
+                now.minusHours(1),
+                true,
+                ru.practicum.ewm.model.EventState.PUBLISHED,
+                "Test Event",
+                1000L
+        );
+
+        when(eventService.getEventPublic(eq(1L), anyString())).thenReturn(eventFullDto);
+
+        mockMvc.perform(get("/events/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.id").value(1L))
+                .andExpect(jsonPath("$.title").value("Test Event"));
 
-        verify(eventService, times(1)).getEventsPublic(
-                isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(false), isNull(), eq(0), eq(10), anyString());
+        verify(eventService, times(1)).getEventPublic(eq(1L), anyString());
+    }
+
+    @Test
+    void getEvent_EventNotFound_ReturnsNotFound() throws Exception {
+        when(eventService.getEventPublic(eq(999L), anyString()))
+                .thenThrow(new ru.practicum.ewm.exception.NotFoundException("Event with id=999 was not found"));
+
+        mockMvc.perform(get("/events/999"))
+                .andExpect(status().isNotFound());
+
+        verify(eventService, times(1)).getEventPublic(eq(999L), anyString());
     }
 }

@@ -1,7 +1,6 @@
 package ru.practicum.ewm.controller.publicapi;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -26,10 +25,10 @@ public class PublicEventController {
                                          @RequestParam(required = false) Boolean paid,
                                          @RequestParam(required = false) String rangeStart,
                                          @RequestParam(required = false) String rangeEnd,
-                                         @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,
+                                         @RequestParam(required = false) Boolean onlyAvailable,
                                          @RequestParam(required = false) String sort,
-                                         @RequestParam(required = false, defaultValue = "0") @Min(0) Integer from,
-                                         @RequestParam(required = false, defaultValue = "10") @Min(1) Integer size,
+                                         @RequestParam(required = false, defaultValue = "0") Integer from,
+                                         @RequestParam(required = false, defaultValue = "10") Integer size,
                                          HttpServletRequest request) {
         log.info("Getting events with filters: text={}, categories={}, paid={}, " +
                         "rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",

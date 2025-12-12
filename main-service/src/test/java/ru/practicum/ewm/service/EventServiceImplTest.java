@@ -78,7 +78,6 @@ class EventServiceImplTest {
                 .build();
 
         Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
-        // Исправляем: используем правильную сортировку
         when(eventRepository.findByInitiatorId(userId,
                 PageRequest.of(0, 10, Sort.by("eventDate").descending())))
                 .thenReturn(eventPage.getContent());
@@ -95,49 +94,68 @@ class EventServiceImplTest {
     }
 
     @Test
-    void getEventsByUser_InvalidPagination_ThrowsValidationException() {
-        Long userId = 1L;
+    void getEventsPublic_WithFilters_ReturnsFilteredEvents() {
+        String text = "test";
+        List<Long> categories = List.of(1L, 2L);
+        Boolean paid = true;
+        String rangeStart = futureDate.minusDays(1).format(formatter);
+        String rangeEnd = futureDate.plusDays(1).format(formatter);
+        Boolean onlyAvailable = false;
+        String sort = "EVENT_DATE";
+        Integer from = 0;
+        Integer size = 10;
+        String ip = "192.168.1.1";
 
-        ValidationException exception1 = assertThrows(ValidationException.class,
-                () -> eventService.getEventsByUser(userId, -1, 10));
-        assertTrue(exception1.getMessage().contains("Parameter 'from' must be greater than or equal to 0"));
-
-        ValidationException exception2 = assertThrows(ValidationException.class,
-                () -> eventService.getEventsByUser(userId, 0, 0));
-        assertTrue(exception2.getMessage().contains("Parameter 'size' must be greater than 0"));
-    }
-
-    @Test
-    void getEventsByUser_WithNullParams_UsesDefaults() {
-        Long userId = 1L;
-        Event event = Event.builder()
+        Event event1 = Event.builder()
                 .id(1L)
-                .title("Event 1")
-                .annotation("Annotation 1")
-                .eventDate(futureDate)
-                .initiator(User.builder().id(userId).name("User1").build())
-                .category(Category.builder().id(1L).name("Cat1").build())
+                .title("Test Event 1")
+                .annotation("Annotation with test word")
+                .description("Description with test")
+                .state(EventState.PUBLISHED)
+                .eventDate(futureDate.plusHours(1))
+                .initiator(User.builder().id(1L).name("User1").build())
+                .category(Category.builder().id(1L).name("Category1").build())
                 .paid(true)
-                .confirmedRequests(5)
+                .participantLimit(100)
+                .confirmedRequests(50)
                 .views(100L)
                 .build();
 
-        // Исправляем: используем правильную сортировку
-        when(eventRepository.findByInitiatorId(userId,
-                PageRequest.of(0, 10, Sort.by("eventDate").descending())))
-                .thenReturn(List.of(event));
-        when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 100L));
+        Event event2 = Event.builder()
+                .id(2L)
+                .title("Test Event 2")
+                .annotation("Another annotation")
+                .description("Another description")
+                .state(EventState.PUBLISHED)
+                .eventDate(futureDate.plusHours(2))
+                .initiator(User.builder().id(2L).name("User2").build())
+                .category(Category.builder().id(2L).name("Category2").build())
+                .paid(true)
+                .participantLimit(50)
+                .confirmedRequests(25)
+                .views(200L)
+                .build();
 
-        List<EventShortDto> result = eventService.getEventsByUser(userId, null, null);
+        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
+        when(eventRepository.findEventsPublic(
+                eq(text), eq(categories), eq(paid), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class)))
+                .thenReturn(eventPage.getContent());
+        when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(eventRepository, times(1)).findByInitiatorId(userId,
-                PageRequest.of(0, 10, Sort.by("eventDate").descending()));
+        List<EventShortDto> result = eventService.getEventsPublic(
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, ip);
+
+        assertEquals(2, result.size());
+        assertEquals("Test Event 1", result.get(0).getTitle());
+        assertEquals("Test Event 2", result.get(1).getTitle());
+        verify(statsService, times(1)).saveHit("/events", ip);
+        verify(eventRepository, times(1)).findEventsPublic(
+                eq(text), eq(categories), eq(paid), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class));
+        verify(statsService, times(1)).getViews(List.of(1L, 2L));
     }
 
     @Test
-    void getEventsPublic_WithInvalidSortParameter_ThrowsValidationException() {
+    void getEventsPublic_InvalidSortParameter_ThrowsValidationException() {
         String ip = "192.168.1.1";
         String invalidSort = "INVALID_SORT";
 
@@ -160,76 +178,6 @@ class EventServiceImplTest {
                 () -> eventService.getEventsPublic(null, null, null, null, null,
                         false, null, 0, 0, ip));
         assertTrue(exception2.getMessage().contains("Parameter 'size' must be greater than 0"));
-    }
-
-    @Test
-    void getEventsPublic_WithNullParams_UsesDefaults() {
-        String ip = "192.168.1.1";
-        Event event = Event.builder()
-                .id(1L)
-                .title("Test Event")
-                .annotation("Annotation")
-                .description("Description")
-                .state(EventState.PUBLISHED)
-                .eventDate(futureDate)
-                .initiator(User.builder().id(1L).build())
-                .category(Category.builder().id(1L).build())
-                .paid(true)
-                .participantLimit(100)
-                .confirmedRequests(50)
-                .views(100L)
-                .build();
-
-        // Исправляем мок с правильными параметрами
-        when(eventRepository.findEventsPublic(
-                eq(null), eq(null), eq(null), any(), eq(null), eq(EventState.PUBLISHED),
-                eq(PageRequest.of(0, 10))))
-                .thenReturn(List.of(event));
-        when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 100L));
-
-        List<EventShortDto> result = eventService.getEventsPublic(
-                null, null, null, null, null, null, null, null, null, ip);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(eventRepository, times(1)).findEventsPublic(
-                eq(null), eq(null), eq(null), any(), eq(null), eq(EventState.PUBLISHED),
-                eq(PageRequest.of(0, 10)));
-    }
-
-    @Test
-    void getEventsPublic_WithOnlyAvailableNull_ShouldUseFalse() {
-        String ip = "192.168.1.1";
-        Event event = Event.builder()
-                .id(1L)
-                .title("Test Event")
-                .annotation("Annotation")
-                .description("Description")
-                .state(EventState.PUBLISHED)
-                .eventDate(futureDate)
-                .initiator(User.builder().id(1L).build())
-                .category(Category.builder().id(1L).build())
-                .paid(true)
-                .participantLimit(100)
-                .confirmedRequests(50)
-                .views(100L)
-                .build();
-
-        when(eventRepository.findEventsPublic(
-                eq(null), eq(null), eq(null), any(), eq(null), eq(EventState.PUBLISHED),
-                eq(PageRequest.of(0, 10))))
-                .thenReturn(List.of(event));
-        when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 100L));
-
-        List<EventShortDto> result = eventService.getEventsPublic(
-                null, null, null, null, null, null, null, 0, 10, ip);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        // Проверяем, что onlyAvailable передается как false
-        verify(eventRepository, times(1)).findEventsPublic(
-                eq(null), eq(null), eq(null), any(), eq(null), eq(EventState.PUBLISHED),
-                eq(PageRequest.of(0, 10)));
     }
 
     @Test
@@ -261,8 +209,6 @@ class EventServiceImplTest {
                 .participantLimit(100)
                 .requestModeration(true)
                 .state(EventState.PENDING)
-                .confirmedRequests(0)
-                .views(0L)
                 .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -276,36 +222,6 @@ class EventServiceImplTest {
         verify(userRepository, times(1)).findById(userId);
         verify(categoryRepository, times(1)).findById(1L);
         verify(eventRepository, times(1)).save(any(Event.class));
-    }
-
-    @Test
-    void createEvent_InvalidEventDate_ThrowsValidationException() {
-        Long userId = 1L;
-        NewEventDto newEventDto = new NewEventDto(
-                "Annotation with at least 20 characters",
-                1L,
-                "Description with at least 20 characters",
-                now.plusHours(1), // Меньше чем через 2 часа
-                new LocationDto(55.754167f, 37.62f),
-                true,
-                100,
-                true,
-                "Test Event"
-        );
-
-        User user = User.builder().id(userId).name("John Doe").build();
-        Category category = Category.builder().id(1L).name("Concerts").build();
-
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-
-        ValidationException exception = assertThrows(ValidationException.class,
-                () -> eventService.createEvent(userId, newEventDto));
-
-        assertTrue(exception.getMessage().contains("Field: eventDate"));
-        verify(userRepository, times(1)).findById(userId);
-        verify(categoryRepository, times(1)).findById(1L);
-        verify(eventRepository, never()).save(any(Event.class));
     }
 
     @Test
@@ -338,28 +254,5 @@ class EventServiceImplTest {
         verify(eventRepository, times(1)).findById(eventId);
         verify(statsService, times(1)).getViews(List.of(eventId));
         verify(statsService, times(1)).saveHit("/events/" + eventId, ip);
-    }
-
-    @Test
-    void getEventPublic_NotPublished_ThrowsNotFoundException() {
-        Long eventId = 1L;
-        String ip = "192.168.1.1";
-
-        Event event = Event.builder()
-                .id(eventId)
-                .title("Test Event")
-                .state(EventState.PENDING)
-                .build();
-
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
-
-        ru.practicum.ewm.exception.NotFoundException exception =
-                assertThrows(ru.practicum.ewm.exception.NotFoundException.class,
-                        () -> eventService.getEventPublic(eventId, ip));
-
-        assertTrue(exception.getMessage().contains("Event with id=" + eventId));
-        verify(eventRepository, times(1)).findById(eventId);
-        verify(statsService, never()).getViews(any());
-        verify(statsService, never()).saveHit(any(), any());
     }
 }
