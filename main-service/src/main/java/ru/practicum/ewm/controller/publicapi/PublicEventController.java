@@ -1,8 +1,6 @@
 package ru.practicum.ewm.controller.publicapi;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -22,15 +20,15 @@ public class PublicEventController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventShortDto> getEvents(@RequestParam(required = false) @Size(max = 7000) String text,
+    public List<EventShortDto> getEvents(@RequestParam(required = false) String text,
                                          @RequestParam(required = false) List<Long> categories,
                                          @RequestParam(required = false) Boolean paid,
                                          @RequestParam(required = false) String rangeStart,
                                          @RequestParam(required = false) String rangeEnd,
                                          @RequestParam(required = false) Boolean onlyAvailable,
                                          @RequestParam(required = false) String sort,
-                                         @RequestParam(defaultValue = "0") @Min(0) Integer from,
-                                         @RequestParam(defaultValue = "10") @Min(1) Integer size,
+                                         @RequestParam(defaultValue = "0") Integer from,
+                                         @RequestParam(defaultValue = "10") Integer size,
                                          HttpServletRequest request) {
         log.info("Getting events with filters: text={}, categories={}, paid={}, " +
                         "rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",

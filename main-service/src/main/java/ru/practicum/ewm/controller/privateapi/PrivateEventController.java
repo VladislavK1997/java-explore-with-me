@@ -1,7 +1,6 @@
 package ru.practicum.ewm.controller.privateapi;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,12 +23,10 @@ public class PrivateEventController {
 
     @GetMapping
     public List<EventShortDto> getEvents(@PathVariable Long userId,
-                                         @RequestParam(required = false, defaultValue = "0") @Min(0) Integer from,
-                                         @RequestParam(required = false, defaultValue = "10") @Min(1) Integer size) {
+                                         @RequestParam(defaultValue = "0") Integer from,
+                                         @RequestParam(defaultValue = "10") Integer size) {
         log.info("Getting events for user id: {}, from: {}, size: {}", userId, from, size);
-        int pageFrom = Math.max(from, 0);
-        int pageSize = size <= 0 ? 10 : size;
-        return eventService.getEventsByUser(userId, pageFrom, pageSize);
+        return eventService.getEventsByUser(userId, from, size);
     }
 
     @PostMapping

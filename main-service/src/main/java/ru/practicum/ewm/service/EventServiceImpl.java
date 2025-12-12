@@ -29,6 +29,7 @@ public class EventServiceImpl implements EventService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final StatsService statsService;
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
@@ -206,13 +207,22 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEventsPublic(String text, List<Long> categories, Boolean paid,
                                                String rangeStart, String rangeEnd, Boolean onlyAvailable,
                                                String sort, Integer from, Integer size, String ip) {
-        validatePagination(from, size);
+        try {
+            statsService.saveHit("/events", ip);
+        } catch (Exception e) {
+            log.error("Failed to save hit: {}", e.getMessage());
+        }
+
+        try {
+            validatePagination(from, size);
+        } catch (ValidationException e) {
+            log.error("Validation error: {}", e.getMessage());
+            throw e;
+        }
 
         if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
             throw new ValidationException("Invalid sort parameter: " + sort);
         }
-
-        statsService.saveHit("/events", ip);
 
         int pageNumber = from / size;
         PageRequest page;
@@ -255,14 +265,18 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventFullDto getEventPublic(Long eventId, String ip) {
+        try {
+            statsService.saveHit("/events/" + eventId, ip);
+        } catch (Exception e) {
+            log.error("Failed to save hit: {}", e.getMessage());
+        }
+
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
         if (event.getState() != EventState.PUBLISHED) {
             throw new NotFoundException("Event with id=" + eventId + " was not found");
         }
-
-        statsService.saveHit("/events/" + eventId, ip);
 
         Long views = statsService.getViews(List.of(eventId)).getOrDefault(eventId, 0L);
         event.setViews(views);
@@ -275,22 +289,12 @@ public class EventServiceImpl implements EventService {
             return null;
         }
 
-        DateTimeFormatter[] formatters = {
-                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
-                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"),
-                DateTimeFormatter.ISO_LOCAL_DATE_TIME,
-                DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        };
-
-        for (DateTimeFormatter formatter : formatters) {
-            try {
-                return LocalDateTime.parse(dateTime, formatter);
-            } catch (DateTimeParseException e) {
-            }
+        try {
+            return LocalDateTime.parse(dateTime, FORMATTER);
+        } catch (DateTimeParseException e) {
+            log.debug("Invalid date format: {}, expected format: yyyy-MM-dd HH:mm:ss", dateTime);
+            return null;
         }
-
-        log.debug("Invalid date format: {}, using null", dateTime);
-        return null;
     }
 
     private void validatePagination(Integer from, Integer size) {
