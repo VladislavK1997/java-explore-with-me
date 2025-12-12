@@ -26,10 +26,10 @@ public class PublicEventController {
                                          @RequestParam(required = false) Boolean paid,
                                          @RequestParam(required = false) String rangeStart,
                                          @RequestParam(required = false) String rangeEnd,
-                                         @RequestParam(defaultValue = "false", required = false) Boolean onlyAvailable,
+                                         @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,
                                          @RequestParam(required = false) String sort,
-                                         @RequestParam(defaultValue = "0", required = false) @Min(0) Integer from,
-                                         @RequestParam(defaultValue = "10", required = false) @Min(1) Integer size,
+                                         @RequestParam(required = false, defaultValue = "0") @Min(0) Integer from,
+                                         @RequestParam(required = false, defaultValue = "10") @Min(1) Integer size,
                                          HttpServletRequest request) {
         log.info("Getting events with filters: text={}, categories={}, paid={}, " +
                         "rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",

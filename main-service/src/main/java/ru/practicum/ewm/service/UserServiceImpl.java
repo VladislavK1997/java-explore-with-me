@@ -35,11 +35,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
-        if (from == null) {
-            from = 0;
+        // Установка значений по умолчанию
+        from = (from == null) ? 0 : from;
+        size = (size == null) ? 10 : size;
+
+        if (from < 0) {
+            throw new ru.practicum.ewm.exception.ValidationException("Parameter 'from' must be greater than or equal to 0");
         }
-        if (size == null) {
-            size = 10;
+        if (size <= 0) {
+            throw new ru.practicum.ewm.exception.ValidationException("Parameter 'size' must be greater than 0");
         }
 
         int pageNumber = from / size;

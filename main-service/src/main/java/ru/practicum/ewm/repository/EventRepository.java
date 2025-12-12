@@ -48,4 +48,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByIdIn(List<Long> eventIds);
 
     Long countByCategoryId(Long categoryId);
+
+    // Добавляем метод для проверки существования события по id и пользователю
+    boolean existsByIdAndInitiatorId(Long eventId, Long userId);
 }

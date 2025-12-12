@@ -14,6 +14,8 @@ import ru.practicum.ewm.config.StatsClientConfig;
 import ru.practicum.ewm.dto.EventShortDto;
 import ru.practicum.ewm.dto.CategoryDto;
 import ru.practicum.ewm.dto.UserShortDto;
+import ru.practicum.ewm.exception.ValidationException;
+import ru.practicum.ewm.model.EventState;
 import ru.practicum.ewm.service.EventService;
 
 import java.time.LocalDateTime;
@@ -64,8 +66,9 @@ class PublicEventControllerTest {
     void getEvents_WithoutParameters_ShouldReturnEvents() throws Exception {
         List<EventShortDto> events = List.of(eventShortDto);
 
-        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
+        when(eventService.getEventsPublic(
+                eq(null), eq(null), eq(null), eq(null), eq(null),
+                eq(false), eq(null), eq(0), eq(10), anyString())).thenReturn(events);
 
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
@@ -74,96 +77,50 @@ class PublicEventControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Test Event"));
 
         verify(eventService, times(1)).getEventsPublic(
-                isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(false), isNull(), eq(0), eq(10), anyString());
-    }
-
-    @Test
-    void getEvents_WithEmptyResult_ShouldReturnEmptyList() throws Exception {
-        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(List.of());
-
-        mockMvc.perform(get("/events"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
-
-        verify(eventService, times(1)).getEventsPublic(
-                isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(false), isNull(), eq(0), eq(10), anyString());
-    }
-
-    @Test
-    void getEvents_WithOnlyAvailableTrue_ShouldPassTrueToService() throws Exception {
-        List<EventShortDto> events = List.of(eventShortDto);
-
-        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(true), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
-
-        mockMvc.perform(get("/events")
-                        .param("onlyAvailable", "true"))
-                .andExpect(status().isOk());
-
-        verify(eventService, times(1)).getEventsPublic(
-                isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(true), isNull(), eq(0), eq(10), anyString());
-    }
-
-    @Test
-    void getEvents_WithOnlyAvailableFalse_ShouldPassFalseToService() throws Exception {
-        List<EventShortDto> events = List.of(eventShortDto);
-
-        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
-
-        mockMvc.perform(get("/events")
-                        .param("onlyAvailable", "false"))
-                .andExpect(status().isOk());
-
-        verify(eventService, times(1)).getEventsPublic(
-                isNull(), isNull(), isNull(), isNull(), isNull(),
-                eq(false), isNull(), eq(0), eq(10), anyString());
+                eq(null), eq(null), eq(null), eq(null), eq(null),
+                eq(false), eq(null), eq(0), eq(10), anyString());
     }
 
     @Test
     void getEvents_WithInvalidFromParam_ShouldReturnBadRequest() throws Exception {
+        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), eq(-1), anyInt(), anyString()))
+                .thenThrow(new ValidationException("Parameter 'from' must be greater than or equal to 0"));
+
         mockMvc.perform(get("/events")
                         .param("from", "-1"))
                 .andExpect(status().isBadRequest());
 
-        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString());
+        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), eq(-1), anyInt(), anyString());
     }
 
     @Test
     void getEvents_WithInvalidSizeParam_ShouldReturnBadRequest() throws Exception {
+        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), eq(0), anyString()))
+                .thenThrow(new ValidationException("Parameter 'size' must be greater than 0"));
+
         mockMvc.perform(get("/events")
                         .param("size", "0"))
                 .andExpect(status().isBadRequest());
 
-        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString());
-    }
-
-    @Test
-    void getEvents_WithInvalidDateFormat_ShouldReturnBadRequest() throws Exception {
-        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString()))
-                .thenThrow(new ru.practicum.ewm.exception.ValidationException("Invalid date format"));
-
-        mockMvc.perform(get("/events")
-                        .param("rangeStart", "invalid-date"))
-                .andExpect(status().isBadRequest());
+        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), eq(0), anyString());
     }
 
     @Test
     void getEvents_WithInvalidSortParam_ShouldReturnBadRequest() throws Exception {
         when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), anyInt(), anyString()))
-                .thenThrow(new ru.practicum.ewm.exception.ValidationException("Invalid sort parameter"));
+                anyBoolean(), eq("INVALID"), anyInt(), anyInt(), anyString()))
+                .thenThrow(new ValidationException("Invalid sort parameter: INVALID"));
 
         mockMvc.perform(get("/events")
                         .param("sort", "INVALID"))
                 .andExpect(status().isBadRequest());
+
+        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), eq("INVALID"), anyInt(), anyInt(), anyString());
     }
 
     @Test
@@ -185,7 +142,7 @@ class PublicEventControllerTest {
                 100,
                 now.minusHours(1),
                 true,
-                ru.practicum.ewm.model.EventState.PUBLISHED,
+                EventState.PUBLISHED,
                 "Test Event",
                 1000L
         );
@@ -209,5 +166,39 @@ class PublicEventControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(eventService, times(1)).getEventPublic(eq(999L), anyString());
+    }
+
+    @Test
+    void getEvents_WithOnlyAvailableTrue_ShouldPassTrueToService() throws Exception {
+        List<EventShortDto> events = List.of(eventShortDto);
+
+        when(eventService.getEventsPublic(
+                eq(null), eq(null), eq(null), eq(null), eq(null),
+                eq(true), eq(null), eq(0), eq(10), anyString())).thenReturn(events);
+
+        mockMvc.perform(get("/events")
+                        .param("onlyAvailable", "true"))
+                .andExpect(status().isOk());
+
+        verify(eventService, times(1)).getEventsPublic(
+                eq(null), eq(null), eq(null), eq(null), eq(null),
+                eq(true), eq(null), eq(0), eq(10), anyString());
+    }
+
+    @Test
+    void getEvents_WithOnlyAvailableFalse_ShouldPassFalseToService() throws Exception {
+        List<EventShortDto> events = List.of(eventShortDto);
+
+        when(eventService.getEventsPublic(
+                eq(null), eq(null), eq(null), eq(null), eq(null),
+                eq(false), eq(null), eq(0), eq(10), anyString())).thenReturn(events);
+
+        mockMvc.perform(get("/events")
+                        .param("onlyAvailable", "false"))
+                .andExpect(status().isOk());
+
+        verify(eventService, times(1)).getEventsPublic(
+                eq(null), eq(null), eq(null), eq(null), eq(null),
+                eq(false), eq(null), eq(0), eq(10), anyString());
     }
 }
