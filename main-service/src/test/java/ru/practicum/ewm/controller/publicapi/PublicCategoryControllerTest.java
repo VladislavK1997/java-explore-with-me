@@ -16,7 +16,7 @@ import ru.practicum.ewm.service.CategoryService;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -61,10 +61,23 @@ class PublicCategoryControllerTest {
     }
 
     @Test
+    void getCategories_WithoutParams_ReturnsCategories() throws Exception {
+        List<CategoryDto> categories = List.of(categoryDto);
+
+        when(categoryService.getCategories(eq(0), eq(10))).thenReturn(categories);
+
+        mockMvc.perform(get("/categories"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        verify(categoryService, times(1)).getCategories(eq(0), eq(10));
+    }
+
+    @Test
     void getCategories_InvalidSizeParam_ReturnsBadRequest() throws Exception {
         mockMvc.perform(get("/categories")
                         .param("from", "0")
-                        .param("size", "0"))  // size=0 теперь невалидно
+                        .param("size", "0"))
                 .andExpect(status().isBadRequest());
 
         verify(categoryService, never()).getCategories(anyInt(), anyInt());

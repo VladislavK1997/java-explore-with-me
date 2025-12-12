@@ -207,18 +207,7 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEventsPublic(String text, List<Long> categories, Boolean paid,
                                                String rangeStart, String rangeEnd, Boolean onlyAvailable,
                                                String sort, Integer from, Integer size, String ip) {
-        try {
-            statsService.saveHit("/events", ip);
-        } catch (Exception e) {
-            log.error("Failed to save hit: {}", e.getMessage());
-        }
-
-        try {
-            validatePagination(from, size);
-        } catch (ValidationException e) {
-            log.error("Validation error: {}", e.getMessage());
-            throw e;
-        }
+        validatePagination(from, size);
 
         if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
             throw new ValidationException("Invalid sort parameter: " + sort);
@@ -260,17 +249,17 @@ public class EventServiceImpl implements EventService {
             result.sort(Comparator.comparing(EventShortDto::getViews).reversed());
         }
 
+        try {
+            statsService.saveHit("/events", ip);
+        } catch (Exception e) {
+            log.error("Failed to save hit: {}", e.getMessage());
+        }
+
         return result;
     }
 
     @Override
     public EventFullDto getEventPublic(Long eventId, String ip) {
-        try {
-            statsService.saveHit("/events/" + eventId, ip);
-        } catch (Exception e) {
-            log.error("Failed to save hit: {}", e.getMessage());
-        }
-
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
 
@@ -280,6 +269,12 @@ public class EventServiceImpl implements EventService {
 
         Long views = statsService.getViews(List.of(eventId)).getOrDefault(eventId, 0L);
         event.setViews(views);
+
+        try {
+            statsService.saveHit("/events/" + eventId, ip);
+        } catch (Exception e) {
+            log.error("Failed to save hit: {}", e.getMessage());
+        }
 
         return EventMapper.toEventFullDto(event);
     }
@@ -298,6 +293,12 @@ public class EventServiceImpl implements EventService {
     }
 
     private void validatePagination(Integer from, Integer size) {
+        if (from == null) {
+            from = 0;
+        }
+        if (size == null) {
+            size = 10;
+        }
         if (from < 0) {
             throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
         }

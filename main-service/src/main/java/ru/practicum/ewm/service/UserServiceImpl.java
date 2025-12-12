@@ -35,9 +35,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
-        int pageNumber = from == null || from == 0 ? 0 : from / size;
-        int pageSize = (size == null) ? 10 : (size <= 0 ? 10 : size);
-        PageRequest page = PageRequest.of(pageNumber, pageSize);
+        if (from == null) {
+            from = 0;
+        }
+        if (size == null) {
+            size = 10;
+        }
+
+        int pageNumber = from / size;
+        PageRequest page = PageRequest.of(pageNumber, size);
 
         List<User> users;
         if (ids != null && !ids.isEmpty()) {
@@ -54,6 +60,9 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User with id=" + userId + " was not found");
+        }
         userRepository.deleteById(userId);
     }
 }

@@ -11,6 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.ewm.dto.NewUserRequest;
 import ru.practicum.ewm.dto.UserDto;
+import ru.practicum.ewm.exception.ConflictException;
+import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.UserMapper;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.UserRepository;
@@ -50,6 +52,19 @@ class UserServiceImplTest {
     }
 
     @Test
+    void createUser_DuplicateEmail_ThrowsConflictException() {
+        NewUserRequest request = new NewUserRequest("John Doe", "john@example.com");
+
+        when(userRepository.existsByEmail("john@example.com")).thenReturn(true);
+
+        ConflictException exception = assertThrows(ConflictException.class,
+                () -> userService.createUser(request));
+        assertEquals("User with email john@example.com already exists", exception.getMessage());
+        verify(userRepository, times(1)).existsByEmail("john@example.com");
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void getUsers_WithIds_ReturnsFilteredUsers() {
         List<Long> ids = List.of(1L, 2L);
         User user1 = User.builder().id(1L).name("User1").email("user1@example.com").build();
@@ -81,7 +96,35 @@ class UserServiceImplTest {
     }
 
     @Test
-    void getUsers_WithPagination_ReturnsCorrectPage() {
+    void getUsers_WithNullParams_ReturnsAllUsers() {
+        User user1 = User.builder().id(1L).name("User1").email("user1@example.com").build();
+        Page<User> page = new PageImpl<>(List.of(user1));
+
+        when(userRepository.findAll(PageRequest.of(0, 10))).thenReturn(page);
+
+        List<UserDto> result = userService.getUsers(null, null, null);
+
+        assertEquals(1, result.size());
+        verify(userRepository, times(1)).findAll(PageRequest.of(0, 10));
+    }
+
+    @Test
+    void getUsers_WithEmptyIdsList_ReturnsAllUsers() {
+        List<Long> emptyIds = List.of();
+        User user1 = User.builder().id(1L).name("User1").email("user1@example.com").build();
+        Page<User> page = new PageImpl<>(List.of(user1));
+
+        when(userRepository.findAll(PageRequest.of(0, 10))).thenReturn(page);
+
+        List<UserDto> result = userService.getUsers(emptyIds, 0, 10);
+
+        assertEquals(1, result.size());
+        verify(userRepository, times(1)).findAll(PageRequest.of(0, 10));
+        verify(userRepository, never()).findByIdIn(any(), any());
+    }
+
+    @Test
+    void getUsers_SecondPage_ReturnsCorrectPage() {
         User user3 = User.builder().id(3L).name("User3").email("user3@example.com").build();
         User user4 = User.builder().id(4L).name("User4").email("user4@example.com").build();
         Page<User> page = new PageImpl<>(List.of(user3, user4));
@@ -99,18 +142,25 @@ class UserServiceImplTest {
     void deleteUser_ExistingUser_DeletesSuccessfully() {
         Long userId = 1L;
 
+        when(userRepository.existsById(userId)).thenReturn(true);
+
         userService.deleteUser(userId);
 
+        verify(userRepository, times(1)).existsById(userId);
         verify(userRepository, times(1)).deleteById(userId);
     }
 
     @Test
-    void deleteUser_NonExistingUser_DeletesWithoutError() {
+    void deleteUser_NonExistingUser_ThrowsNotFoundException() {
         Long userId = 999L;
 
-        userService.deleteUser(userId);
+        when(userRepository.existsById(userId)).thenReturn(false);
 
-        verify(userRepository, times(1)).deleteById(userId);
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> userService.deleteUser(userId));
+        assertEquals("User with id=999 was not found", exception.getMessage());
+        verify(userRepository, times(1)).existsById(userId);
+        verify(userRepository, never()).deleteById(any());
     }
 
     @Test
@@ -122,32 +172,5 @@ class UserServiceImplTest {
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void createUser_DuplicateEmail_ShouldNotThrowException() {
-        NewUserRequest request = new NewUserRequest("John Doe", "john@example.com");
-        User user = UserMapper.toUser(request);
-        user.setId(1L);
-
-        when(userRepository.save(any(User.class))).thenReturn(user);
-
-        assertDoesNotThrow(() -> userService.createUser(request));
-        verify(userRepository, times(1)).save(any(User.class));
-    }
-
-    @Test
-    void getUsers_WithEmptyIdsList_ReturnsAllUsers() {
-        List<Long> emptyIds = List.of();
-        User user1 = User.builder().id(1L).name("User1").email("user1@example.com").build();
-        Page<User> page = new PageImpl<>(List.of(user1));
-
-        when(userRepository.findAll(PageRequest.of(0, 10))).thenReturn(page);
-
-        List<UserDto> result = userService.getUsers(emptyIds, 0, 10);
-
-        assertEquals(1, result.size());
-        verify(userRepository, times(1)).findAll(PageRequest.of(0, 10));
-        verify(userRepository, never()).findByIdIn(any(), any());
     }
 }

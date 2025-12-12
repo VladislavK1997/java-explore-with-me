@@ -33,6 +33,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryDto> getCategories(Integer from, Integer size) {
+        if (from == null) {
+            from = 0;
+        }
+        if (size == null) {
+            size = 10;
+        }
         int pageNumber = from / size;
         PageRequest page = PageRequest.of(pageNumber, size);
         return categoryRepository.findAll(page).getContent().stream()

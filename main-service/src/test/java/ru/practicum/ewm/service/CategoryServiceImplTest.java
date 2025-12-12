@@ -71,6 +71,20 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    void getCategories_WithNullParams_ReturnsCategories() {
+        Category category1 = Category.builder().id(1L).name("Concerts").build();
+        Page<Category> page = new PageImpl<>(List.of(category1));
+
+        when(categoryRepository.findAll(PageRequest.of(0, 10))).thenReturn(page);
+
+        List<CategoryDto> result = categoryService.getCategories(null, null);
+
+        assertEquals(1, result.size());
+        assertEquals("Concerts", result.get(0).getName());
+        verify(categoryRepository, times(1)).findAll(PageRequest.of(0, 10));
+    }
+
+    @Test
     void getCategory_ExistingId_ReturnsCategoryDto() {
         Long categoryId = 1L;
         Category category = Category.builder().id(categoryId).name("Concerts").build();

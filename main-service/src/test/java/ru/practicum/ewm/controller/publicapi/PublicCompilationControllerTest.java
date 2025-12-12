@@ -63,9 +63,40 @@ class PublicCompilationControllerTest {
     }
 
     @Test
+    void getCompilations_ValidRequest_ReturnsCompilations() throws Exception {
+        List<CompilationDto> compilations = List.of(compilationDto);
+
+        when(compilationService.getCompilations(anyBoolean(), anyInt(), anyInt())).thenReturn(compilations);
+
+        mockMvc.perform(get("/compilations")
+                        .param("pinned", "true")
+                        .param("from", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].title").value("Summer Events"));
+
+        verify(compilationService, times(1)).getCompilations(true, 0, 10);
+    }
+
+    @Test
+    void getCompilations_WithoutParams_ReturnsCompilations() throws Exception {
+        List<CompilationDto> compilations = List.of(compilationDto);
+
+        when(compilationService.getCompilations(isNull(), eq(0), eq(10))).thenReturn(compilations);
+
+        mockMvc.perform(get("/compilations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        verify(compilationService, times(1)).getCompilations(isNull(), eq(0), eq(10));
+    }
+
+    @Test
     void getCompilations_InvalidPaginationParams_ReturnsBadRequest() throws Exception {
         mockMvc.perform(get("/compilations")
-                        .param("from", "-1")  // невалидно
+                        .param("from", "-1")
                         .param("size", "10"))
                 .andExpect(status().isBadRequest());
 
@@ -76,7 +107,7 @@ class PublicCompilationControllerTest {
     void getCompilations_InvalidSizeParam_ReturnsBadRequest() throws Exception {
         mockMvc.perform(get("/compilations")
                         .param("from", "0")
-                        .param("size", "0"))  // невалидно
+                        .param("size", "0"))
                 .andExpect(status().isBadRequest());
 
         verify(compilationService, never()).getCompilations(any(), anyInt(), anyInt());

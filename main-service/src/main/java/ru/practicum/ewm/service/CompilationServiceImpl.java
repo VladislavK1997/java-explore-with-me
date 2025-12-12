@@ -95,6 +95,13 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
+        if (from == null) {
+            from = 0;
+        }
+        if (size == null) {
+            size = 10;
+        }
+
         PageRequest page = PageRequest.of(from / size, size);
 
         List<Compilation> compilations;

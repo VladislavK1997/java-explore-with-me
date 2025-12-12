@@ -28,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Import(StatsClientConfig.class)
 @WebMvcTest(PublicEventController.class)
+@ActiveProfiles("test")
 class PublicEventControllerTest {
 
     @Autowired
@@ -116,9 +117,7 @@ class PublicEventControllerTest {
         when(eventService.getEventsPublic(isNull(), isNull(), isNull(), any(), isNull(),
                 eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
 
-        mockMvc.perform(get("/events")
-                        .param("from", "0")
-                        .param("size", "10"))
+        mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
@@ -128,13 +127,15 @@ class PublicEventControllerTest {
     }
 
     @Test
-    void getEvents_DefaultParameters_ReturnsEvents() throws Exception {
+    void getEvents_WithParams_ReturnsEvents() throws Exception {
         List<EventShortDto> events = List.of(eventShortDto);
 
         when(eventService.getEventsPublic(isNull(), isNull(), isNull(), any(), isNull(),
                 eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
 
-        mockMvc.perform(get("/events"))
+        mockMvc.perform(get("/events")
+                        .param("from", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 

@@ -27,8 +27,8 @@ public class PublicEventController {
                                          @RequestParam(required = false) String rangeEnd,
                                          @RequestParam(required = false) Boolean onlyAvailable,
                                          @RequestParam(required = false) String sort,
-                                         @RequestParam(defaultValue = "0") Integer from,
-                                         @RequestParam(defaultValue = "10") Integer size,
+                                         @RequestParam(defaultValue = "0", required = false) Integer from,
+                                         @RequestParam(defaultValue = "10", required = false) Integer size,
                                          HttpServletRequest request) {
         log.info("Getting events with filters: text={}, categories={}, paid={}, " +
                         "rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",

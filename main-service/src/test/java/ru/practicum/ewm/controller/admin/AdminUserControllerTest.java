@@ -93,12 +93,25 @@ class AdminUserControllerTest {
     }
 
     @Test
+    void getUsers_WithoutParams_ReturnsUsers() throws Exception {
+        List<UserDto> users = List.of(userDto);
+
+        when(userService.getUsers(isNull(), eq(0), eq(10))).thenReturn(users);
+
+        mockMvc.perform(get("/admin/users"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        verify(userService, times(1)).getUsers(isNull(), eq(0), eq(10));
+    }
+
+    @Test
     void getUsers_WithoutIds_ReturnsAllUsers() throws Exception {
         List<UserDto> users = List.of(
                 new UserDto(1L, "User1", "user1@example.com")
         );
 
-        when(userService.getUsers(null, 0, 10)).thenReturn(users);
+        when(userService.getUsers(isNull(), eq(0), eq(10))).thenReturn(users);
 
         mockMvc.perform(get("/admin/users")
                         .param("from", "0")
@@ -106,7 +119,7 @@ class AdminUserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
-        verify(userService, times(1)).getUsers(null, 0, 10);
+        verify(userService, times(1)).getUsers(isNull(), eq(0), eq(10));
     }
 
     @Test

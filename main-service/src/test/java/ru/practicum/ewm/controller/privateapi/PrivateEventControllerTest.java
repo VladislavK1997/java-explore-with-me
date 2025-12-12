@@ -117,4 +117,54 @@ class PrivateEventControllerTest {
 
         verify(eventService, times(1)).updateEventByUser(eq(1L), eq(10L), any(UpdateEventUserRequest.class));
     }
+
+    @Test
+    void getEvents_ValidRequest_ReturnsEvents() throws Exception {
+        List<EventShortDto> events = List.of(
+                new EventShortDto(
+                        1L,
+                        "Annotation",
+                        new CategoryDto(1L, "Category"),
+                        10L,
+                        now.plusDays(1),
+                        new UserShortDto(1L, "User"),
+                        true,
+                        "Event",
+                        100L
+                )
+        );
+
+        when(eventService.getEventsByUser(eq(1L), anyInt(), anyInt())).thenReturn(events);
+
+        mockMvc.perform(get("/users/{userId}/events", 1L)
+                        .param("from", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk());
+
+        verify(eventService, times(1)).getEventsByUser(eq(1L), eq(0), eq(10));
+    }
+
+    @Test
+    void getEvents_WithoutParams_ReturnsEvents() throws Exception {
+        List<EventShortDto> events = List.of(
+                new EventShortDto(
+                        1L,
+                        "Annotation",
+                        new CategoryDto(1L, "Category"),
+                        10L,
+                        now.plusDays(1),
+                        new UserShortDto(1L, "User"),
+                        true,
+                        "Event",
+                        100L
+                )
+        );
+
+        when(eventService.getEventsByUser(eq(1L), eq(0), eq(10))).thenReturn(events);
+
+        mockMvc.perform(get("/users/{userId}/events", 1L))
+                .andExpect(status().isOk());
+
+        verify(eventService, times(1)).getEventsByUser(eq(1L), eq(0), eq(10));
+    }
 }
