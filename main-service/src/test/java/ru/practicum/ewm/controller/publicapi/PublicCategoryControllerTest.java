@@ -74,7 +74,8 @@ class PublicCategoryControllerTest {
     }
 
     @Test
-    void getCategories_InvalidSizeParam_ReturnsBadRequest() throws Exception {
+    void getCategories_InvalidSizeParam_ShouldReturnBadRequest() throws Exception {
+        // Контроллер сам проверяет @Min(1) для size
         mockMvc.perform(get("/categories")
                         .param("from", "0")
                         .param("size", "0"))
@@ -84,7 +85,8 @@ class PublicCategoryControllerTest {
     }
 
     @Test
-    void getCategories_InvalidFromParam_ReturnsBadRequest() throws Exception {
+    void getCategories_InvalidFromParam_ShouldReturnBadRequest() throws Exception {
+        // Контроллер сам проверяет @Min(0) для from
         mockMvc.perform(get("/categories")
                         .param("from", "-1")
                         .param("size", "10"))

@@ -67,8 +67,8 @@ class PublicEventControllerTest {
         List<EventShortDto> events = List.of(eventShortDto);
 
         when(eventService.getEventsPublic(
-                eq(null), eq(null), eq(null), eq(null), eq(null),
-                eq(false), eq(null), eq(0), eq(10), anyString())).thenReturn(events);
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
 
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
@@ -77,36 +77,32 @@ class PublicEventControllerTest {
                 .andExpect(jsonPath("$[0].title").value("Test Event"));
 
         verify(eventService, times(1)).getEventsPublic(
-                eq(null), eq(null), eq(null), eq(null), eq(null),
-                eq(false), eq(null), eq(0), eq(10), anyString());
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString());
     }
 
     @Test
     void getEvents_WithInvalidFromParam_ShouldReturnBadRequest() throws Exception {
-        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), eq(-1), anyInt(), anyString()))
-                .thenThrow(new ValidationException("Parameter 'from' must be greater than or equal to 0"));
-
+        // Контроллер сам проверяет параметры благодаря @Min аннотациям
+        // Service не должен вызываться
         mockMvc.perform(get("/events")
                         .param("from", "-1"))
                 .andExpect(status().isBadRequest());
 
-        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), eq(-1), anyInt(), anyString());
+        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString());
     }
 
     @Test
     void getEvents_WithInvalidSizeParam_ShouldReturnBadRequest() throws Exception {
-        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), eq(0), anyString()))
-                .thenThrow(new ValidationException("Parameter 'size' must be greater than 0"));
-
+        // Контроллер сам проверяет параметры благодаря @Min аннотациям
+        // Service не должен вызываться
         mockMvc.perform(get("/events")
                         .param("size", "0"))
                 .andExpect(status().isBadRequest());
 
-        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), any(), anyInt(), eq(0), anyString());
+        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString());
     }
 
     @Test
@@ -173,16 +169,16 @@ class PublicEventControllerTest {
         List<EventShortDto> events = List.of(eventShortDto);
 
         when(eventService.getEventsPublic(
-                eq(null), eq(null), eq(null), eq(null), eq(null),
-                eq(true), eq(null), eq(0), eq(10), anyString())).thenReturn(events);
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(true), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
 
         mockMvc.perform(get("/events")
                         .param("onlyAvailable", "true"))
                 .andExpect(status().isOk());
 
         verify(eventService, times(1)).getEventsPublic(
-                eq(null), eq(null), eq(null), eq(null), eq(null),
-                eq(true), eq(null), eq(0), eq(10), anyString());
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(true), isNull(), eq(0), eq(10), anyString());
     }
 
     @Test
@@ -190,15 +186,29 @@ class PublicEventControllerTest {
         List<EventShortDto> events = List.of(eventShortDto);
 
         when(eventService.getEventsPublic(
-                eq(null), eq(null), eq(null), eq(null), eq(null),
-                eq(false), eq(null), eq(0), eq(10), anyString())).thenReturn(events);
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
 
         mockMvc.perform(get("/events")
                         .param("onlyAvailable", "false"))
                 .andExpect(status().isOk());
 
         verify(eventService, times(1)).getEventsPublic(
-                eq(null), eq(null), eq(null), eq(null), eq(null),
-                eq(false), eq(null), eq(0), eq(10), anyString());
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString());
+    }
+
+    @Test
+    void getEvents_WithEmptyResult_ShouldReturnEmptyList() throws Exception {
+        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(List.of());
+
+        mockMvc.perform(get("/events"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(eventService, times(1)).getEventsPublic(
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString());
     }
 }
