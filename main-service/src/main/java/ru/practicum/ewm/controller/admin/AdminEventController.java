@@ -26,8 +26,8 @@ public class AdminEventController {
                                         @RequestParam(required = false) List<Long> categories,
                                         @RequestParam(required = false) String rangeStart,
                                         @RequestParam(required = false) String rangeEnd,
-                                        @RequestParam(required = false, defaultValue = "0") @Min(0) Integer from,
-                                        @RequestParam(required = false, defaultValue = "10") @Min(1) Integer size) {
+                                        @RequestParam(required = false, defaultValue = "0") Integer from,
+                                        @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.info("Getting events by admin with filters");
         return eventService.getEventsByAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
     }

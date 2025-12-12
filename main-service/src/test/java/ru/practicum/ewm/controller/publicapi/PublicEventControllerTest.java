@@ -171,4 +171,38 @@ class PublicEventControllerTest {
 
         verify(eventService, times(1)).getEventPublic(eq(999L), anyString());
     }
+
+    @Test
+    void getEvents_WithCategories_ShouldPassCategoriesToService() throws Exception {
+        List<EventShortDto> events = List.of(eventShortDto);
+
+        when(eventService.getEventsPublic(
+                isNull(), eq(List.of(1L, 2L)), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
+
+        mockMvc.perform(get("/events")
+                        .param("categories", "1,2"))
+                .andExpect(status().isOk());
+
+        verify(eventService, times(1)).getEventsPublic(
+                isNull(), eq(List.of(1L, 2L)), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString());
+    }
+
+    @Test
+    void getEvents_WithText_ShouldPassTextToService() throws Exception {
+        List<EventShortDto> events = List.of(eventShortDto);
+
+        when(eventService.getEventsPublic(
+                eq("concert"), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
+
+        mockMvc.perform(get("/events")
+                        .param("text", "concert"))
+                .andExpect(status().isOk());
+
+        verify(eventService, times(1)).getEventsPublic(
+                eq("concert"), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString());
+    }
 }
