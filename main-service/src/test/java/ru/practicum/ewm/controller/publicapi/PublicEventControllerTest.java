@@ -11,11 +11,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.ewm.config.StatsClientConfig;
-import ru.practicum.ewm.dto.EventFullDto;
 import ru.practicum.ewm.dto.EventShortDto;
 import ru.practicum.ewm.dto.CategoryDto;
 import ru.practicum.ewm.dto.UserShortDto;
-import ru.practicum.ewm.model.EventState;
 import ru.practicum.ewm.service.EventService;
 
 import java.time.LocalDateTime;
@@ -38,7 +36,6 @@ class PublicEventControllerTest {
     private EventService eventService;
 
     private ObjectMapper objectMapper;
-    private EventFullDto eventFullDto;
     private EventShortDto eventShortDto;
     private final LocalDateTime now = LocalDateTime.now();
 
@@ -49,25 +46,6 @@ class PublicEventControllerTest {
 
         CategoryDto categoryDto = new CategoryDto(1L, "Concerts");
         UserShortDto userShortDto = new UserShortDto(1L, "John Doe");
-
-        eventFullDto = new EventFullDto(
-                1L,
-                "Event annotation",
-                categoryDto,
-                50L,
-                now.minusDays(1),
-                "Full event description",
-                now.plusDays(1),
-                userShortDto,
-                new ru.practicum.ewm.dto.LocationDto(55.754167f, 37.62f),
-                true,
-                100,
-                now.minusHours(1),
-                true,
-                EventState.PUBLISHED,
-                "Test Event",
-                1000L
-        );
 
         eventShortDto = new EventShortDto(
                 1L,
@@ -83,18 +61,34 @@ class PublicEventControllerTest {
     }
 
     @Test
-    void getEvents_WithoutOnlyAvailableParam_ShouldUseDefaultFalse() throws Exception {
+    void getEvents_WithoutParameters_ShouldReturnEvents() throws Exception {
         List<EventShortDto> events = List.of(eventShortDto);
 
-        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), any(), isNull(),
+        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
                 eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
 
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].title").value("Test Event"));
 
         verify(eventService, times(1)).getEventsPublic(
-                isNull(), isNull(), isNull(), any(), isNull(),
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString());
+    }
+
+    @Test
+    void getEvents_WithEmptyResult_ShouldReturnEmptyList() throws Exception {
+        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(List.of());
+
+        mockMvc.perform(get("/events"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(eventService, times(1)).getEventsPublic(
+                isNull(), isNull(), isNull(), isNull(), isNull(),
                 eq(false), isNull(), eq(0), eq(10), anyString());
     }
 
@@ -102,7 +96,7 @@ class PublicEventControllerTest {
     void getEvents_WithOnlyAvailableTrue_ShouldPassTrueToService() throws Exception {
         List<EventShortDto> events = List.of(eventShortDto);
 
-        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), any(), isNull(),
+        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
                 eq(true), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
 
         mockMvc.perform(get("/events")
@@ -110,7 +104,7 @@ class PublicEventControllerTest {
                 .andExpect(status().isOk());
 
         verify(eventService, times(1)).getEventsPublic(
-                isNull(), isNull(), isNull(), any(), isNull(),
+                isNull(), isNull(), isNull(), isNull(), isNull(),
                 eq(true), isNull(), eq(0), eq(10), anyString());
     }
 
@@ -118,7 +112,7 @@ class PublicEventControllerTest {
     void getEvents_WithOnlyAvailableFalse_ShouldPassFalseToService() throws Exception {
         List<EventShortDto> events = List.of(eventShortDto);
 
-        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), any(), isNull(),
+        when(eventService.getEventsPublic(isNull(), isNull(), isNull(), isNull(), isNull(),
                 eq(false), isNull(), eq(0), eq(10), anyString())).thenReturn(events);
 
         mockMvc.perform(get("/events")
@@ -126,7 +120,7 @@ class PublicEventControllerTest {
                 .andExpect(status().isOk());
 
         verify(eventService, times(1)).getEventsPublic(
-                isNull(), isNull(), isNull(), any(), isNull(),
+                isNull(), isNull(), isNull(), isNull(), isNull(),
                 eq(false), isNull(), eq(0), eq(10), anyString());
     }
 
@@ -174,6 +168,28 @@ class PublicEventControllerTest {
 
     @Test
     void getEvent_ValidId_ReturnsEvent() throws Exception {
+        CategoryDto categoryDto = new CategoryDto(1L, "Concerts");
+        UserShortDto userShortDto = new UserShortDto(1L, "John Doe");
+
+        ru.practicum.ewm.dto.EventFullDto eventFullDto = new ru.practicum.ewm.dto.EventFullDto(
+                1L,
+                "Event annotation",
+                categoryDto,
+                50L,
+                now.minusDays(1),
+                "Full event description",
+                now.plusDays(1),
+                userShortDto,
+                new ru.practicum.ewm.dto.LocationDto(55.754167f, 37.62f),
+                true,
+                100,
+                now.minusHours(1),
+                true,
+                ru.practicum.ewm.model.EventState.PUBLISHED,
+                "Test Event",
+                1000L
+        );
+
         when(eventService.getEventPublic(eq(1L), anyString())).thenReturn(eventFullDto);
 
         mockMvc.perform(get("/events/1"))

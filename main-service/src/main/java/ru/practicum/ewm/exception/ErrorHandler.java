@@ -218,6 +218,19 @@ public class ErrorHandler {
         );
     }
 
+    @ExceptionHandler(NullPointerException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiError handleNullPointerException(NullPointerException e) {
+        log.error("Null pointer exception: {}", e.getMessage(), e);
+        return new ApiError(
+                List.of(e.toString()),
+                e.getMessage(),
+                "Internal server error",
+                "INTERNAL_SERVER_ERROR",
+                LocalDateTime.now()
+        );
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleOtherExceptions(Exception e) {
