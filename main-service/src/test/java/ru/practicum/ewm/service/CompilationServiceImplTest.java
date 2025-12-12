@@ -46,7 +46,6 @@ class CompilationServiceImplTest {
 
     @Test
     void createCompilation_ValidData_ReturnsCompilationDto() {
-        // Given
         NewCompilationDto newCompilationDto = new NewCompilationDto(
                 List.of(1L, 2L, 3L),
                 true,
@@ -68,14 +67,11 @@ class CompilationServiceImplTest {
         when(eventRepository.findByIdIn(List.of(1L, 2L, 3L))).thenReturn(List.of(event1, event2, event3));
         when(compilationRepository.save(any(Compilation.class))).thenReturn(compilation);
 
-        // Используем any() для списка ID, так как порядок может быть разным
         when(statsService.getViews(anyList())).thenReturn(
                 Map.of(1L, 100L, 2L, 200L, 3L, 300L));
 
-        // When
         CompilationDto result = compilationService.createCompilation(newCompilationDto);
 
-        // Then
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals("Summer Events", result.getTitle());
@@ -89,7 +85,6 @@ class CompilationServiceImplTest {
 
     @Test
     void createCompilation_NoEvents_ReturnsCompilationDto() {
-        // Given
         NewCompilationDto newCompilationDto = new NewCompilationDto(
                 null,
                 false,
@@ -105,10 +100,8 @@ class CompilationServiceImplTest {
 
         when(compilationRepository.save(any(Compilation.class))).thenReturn(compilation);
 
-        // When
         CompilationDto result = compilationService.createCompilation(newCompilationDto);
 
-        // Then
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals("Empty Compilation", result.getTitle());
@@ -122,25 +115,20 @@ class CompilationServiceImplTest {
 
     @Test
     void deleteCompilation_ExistingId_DeletesSuccessfully() {
-        // Given
         Long compilationId = 1L;
         when(compilationRepository.existsById(compilationId)).thenReturn(true);
 
-        // When
         compilationService.deleteCompilation(compilationId);
 
-        // Then
         verify(compilationRepository, times(1)).existsById(compilationId);
         verify(compilationRepository, times(1)).deleteById(compilationId);
     }
 
     @Test
     void deleteCompilation_NonExistingId_ThrowsNotFoundException() {
-        // Given
         Long compilationId = 999L;
         when(compilationRepository.existsById(compilationId)).thenReturn(false);
 
-        // When & Then
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> compilationService.deleteCompilation(compilationId));
         assertEquals("Compilation with id=999 was not found", exception.getMessage());
@@ -150,7 +138,6 @@ class CompilationServiceImplTest {
 
     @Test
     void updateCompilation_ValidUpdate_ReturnsUpdatedCompilation() {
-        // Given
         Long compilationId = 1L;
 
         Compilation existingCompilation = Compilation.builder()
@@ -172,13 +159,10 @@ class CompilationServiceImplTest {
         when(eventRepository.findByIdIn(List.of(1L, 2L))).thenReturn(List.of(event1, event2));
         when(compilationRepository.save(any(Compilation.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Используем any() для списка ID
         when(statsService.getViews(anyList())).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
-        // When
         CompilationDto result = compilationService.updateCompilation(compilationId, updateRequest);
 
-        // Then
         assertNotNull(result);
         assertEquals("New Title", result.getTitle());
         assertTrue(result.getPinned());
@@ -191,7 +175,6 @@ class CompilationServiceImplTest {
 
     @Test
     void updateCompilation_PartialUpdate_ReturnsPartiallyUpdatedCompilation() {
-        // Given
         Long compilationId = 1L;
 
         Event existingEvent = Event.builder().id(10L).title("Existing Event").build();
@@ -204,15 +187,12 @@ class CompilationServiceImplTest {
 
         UpdateCompilationRequest updateRequest = new UpdateCompilationRequest();
         updateRequest.setTitle("New Title");
-        // events и pinned остаются null, значит не меняются
 
         when(compilationRepository.findById(compilationId)).thenReturn(Optional.of(existingCompilation));
         when(compilationRepository.save(any(Compilation.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // When
         CompilationDto result = compilationService.updateCompilation(compilationId, updateRequest);
 
-        // Then
         assertNotNull(result);
         assertEquals("New Title", result.getTitle());
         assertFalse(result.getPinned()); // осталось false
@@ -225,13 +205,11 @@ class CompilationServiceImplTest {
 
     @Test
     void updateCompilation_NonExistingId_ThrowsNotFoundException() {
-        // Given
         Long compilationId = 999L;
         UpdateCompilationRequest updateRequest = new UpdateCompilationRequest();
 
         when(compilationRepository.findById(compilationId)).thenReturn(Optional.empty());
 
-        // When & Then
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> compilationService.updateCompilation(compilationId, updateRequest));
         assertEquals("Compilation with id=999 was not found", exception.getMessage());
@@ -241,7 +219,6 @@ class CompilationServiceImplTest {
 
     @Test
     void getCompilations_WithPinnedFilter_ReturnsFilteredCompilations() {
-        // Given
         Boolean pinned = true;
 
         Event event1 = Event.builder().id(1L).title("Event 1").build();
@@ -264,7 +241,6 @@ class CompilationServiceImplTest {
         when(compilationRepository.findByPinned(pinned, PageRequest.of(0, 10)))
                 .thenReturn(List.of(compilation1, compilation2));
 
-        // Используем any() для списка ID
         when(statsService.getViews(anyList())).thenAnswer(invocation -> {
             List<Long> ids = invocation.getArgument(0);
             Map<Long, Long> result = new HashMap<>();
@@ -274,10 +250,8 @@ class CompilationServiceImplTest {
             return result;
         });
 
-        // When
         List<CompilationDto> result = compilationService.getCompilations(pinned, 0, 10);
 
-        // Then
         assertEquals(2, result.size());
         assertEquals("Pinned Compilation 1", result.get(0).getTitle());
         assertEquals("Pinned Compilation 2", result.get(1).getTitle());
@@ -289,7 +263,6 @@ class CompilationServiceImplTest {
 
     @Test
     void getCompilations_WithoutPinnedFilter_ReturnsAllCompilations() {
-        // Given
         Compilation compilation1 = Compilation.builder()
                 .id(1L)
                 .events(new HashSet<>())
@@ -308,10 +281,8 @@ class CompilationServiceImplTest {
 
         when(compilationRepository.findAll(PageRequest.of(0, 10))).thenReturn(page);
 
-        // When
         List<CompilationDto> result = compilationService.getCompilations(null, 0, 10);
 
-        // Then
         assertEquals(2, result.size());
         assertEquals("Pinned Compilation", result.get(0).getTitle());
         assertEquals("Not Pinned Compilation", result.get(1).getTitle());
@@ -322,7 +293,6 @@ class CompilationServiceImplTest {
 
     @Test
     void getCompilation_ExistingId_ReturnsCompilationDto() {
-        // Given
         Long compilationId = 1L;
 
         Event event1 = Event.builder().id(1L).title("Event 1").build();
@@ -337,13 +307,10 @@ class CompilationServiceImplTest {
 
         when(compilationRepository.findById(compilationId)).thenReturn(Optional.of(compilation));
 
-        // Используем any() для списка ID
         when(statsService.getViews(anyList())).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
-        // When
         CompilationDto result = compilationService.getCompilation(compilationId);
 
-        // Then
         assertNotNull(result);
         assertEquals(compilationId, result.getId());
         assertEquals("Test Compilation", result.getTitle());
@@ -355,12 +322,10 @@ class CompilationServiceImplTest {
 
     @Test
     void getCompilation_NonExistingId_ThrowsNotFoundException() {
-        // Given
         Long compilationId = 999L;
 
         when(compilationRepository.findById(compilationId)).thenReturn(Optional.empty());
 
-        // When & Then
         NotFoundException exception = assertThrows(NotFoundException.class,
                 () -> compilationService.getCompilation(compilationId));
         assertEquals("Compilation with id=999 was not found", exception.getMessage());
@@ -370,14 +335,11 @@ class CompilationServiceImplTest {
 
     @Test
     void getCompilations_EmptyResult_ReturnsEmptyList() {
-        // Given
         Page<Compilation> emptyPage = new PageImpl<>(List.of());
         when(compilationRepository.findAll(PageRequest.of(0, 10))).thenReturn(emptyPage);
 
-        // When
         List<CompilationDto> result = compilationService.getCompilations(null, 0, 10);
 
-        // Then
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(compilationRepository, times(1)).findAll(PageRequest.of(0, 10));
@@ -386,7 +348,6 @@ class CompilationServiceImplTest {
 
     @Test
     void getCompilations_WithPagination_ReturnsCorrectPage() {
-        // Given
         Compilation compilation3 = Compilation.builder()
                 .id(3L)
                 .events(new HashSet<>())
@@ -405,10 +366,8 @@ class CompilationServiceImplTest {
 
         when(compilationRepository.findAll(PageRequest.of(1, 2))).thenReturn(page);
 
-        // When
         List<CompilationDto> result = compilationService.getCompilations(null, 2, 2);
 
-        // Then
         assertEquals(2, result.size());
         assertEquals(3L, result.get(0).getId());
         assertEquals(4L, result.get(1).getId());
@@ -417,7 +376,6 @@ class CompilationServiceImplTest {
 
     @Test
     void createCompilation_EmptyEventsList_ReturnsCompilationWithoutEvents() {
-        // Given
         NewCompilationDto newCompilationDto = new NewCompilationDto(
                 List.of(),
                 false,
@@ -433,10 +391,8 @@ class CompilationServiceImplTest {
 
         when(compilationRepository.save(any(Compilation.class))).thenReturn(compilation);
 
-        // When
         CompilationDto result = compilationService.createCompilation(newCompilationDto);
 
-        // Then
         assertNotNull(result);
         assertEquals("Empty Events Compilation", result.getTitle());
         verify(eventRepository, times(1)).findByIdIn(List.of());

@@ -69,9 +69,11 @@ public class CompilationServiceImpl implements CompilationService {
         Compilation compilation = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Compilation with id=" + compId + " was not found"));
 
+        boolean eventsUpdated = false;
         if (updateRequest.getEvents() != null) {
             Set<Event> events = new HashSet<>(eventRepository.findByIdIn(updateRequest.getEvents()));
             compilation.setEvents(events);
+            eventsUpdated = true;
         }
         if (updateRequest.getPinned() != null) {
             compilation.setPinned(updateRequest.getPinned());
@@ -82,7 +84,7 @@ public class CompilationServiceImpl implements CompilationService {
 
         Compilation updatedCompilation = compilationRepository.save(compilation);
 
-        if (!updatedCompilation.getEvents().isEmpty()) {
+        if (eventsUpdated && !updatedCompilation.getEvents().isEmpty()) {
             List<Long> eventIds = updatedCompilation.getEvents().stream()
                     .map(Event::getId)
                     .collect(Collectors.toList());
