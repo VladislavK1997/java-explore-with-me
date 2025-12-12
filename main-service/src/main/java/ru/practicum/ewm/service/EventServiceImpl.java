@@ -34,7 +34,15 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                                String rangeStart, String rangeEnd, Integer from, Integer size) {
-        validatePagination(from, size);
+        if (from == null) from = 0;
+        if (size == null) size = 10;
+
+        if (from < 0) {
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+        }
+        if (size <= 0) {
+            throw new ValidationException("Parameter 'size' must be greater than 0");
+        }
 
         int pageNumber = from / size;
         PageRequest page = PageRequest.of(pageNumber, size);
@@ -111,7 +119,15 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size) {
-        validatePagination(from, size);
+        if (from == null) from = 0;
+        if (size == null) size = 10;
+
+        if (from < 0) {
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+        }
+        if (size <= 0) {
+            throw new ValidationException("Parameter 'size' must be greater than 0");
+        }
 
         int pageNumber = from / size;
         PageRequest page = PageRequest.of(pageNumber, size);
@@ -207,7 +223,15 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEventsPublic(String text, List<Long> categories, Boolean paid,
                                                String rangeStart, String rangeEnd, Boolean onlyAvailable,
                                                String sort, Integer from, Integer size, String ip) {
-        validatePagination(from, size);
+        if (from == null) from = 0;
+        if (size == null) size = 10;
+
+        if (from < 0) {
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+        }
+        if (size <= 0) {
+            throw new ValidationException("Parameter 'size' must be greater than 0");
+        }
 
         if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
             throw new ValidationException("Invalid sort parameter: " + sort);
@@ -228,7 +252,16 @@ public class EventServiceImpl implements EventService {
             start = LocalDateTime.now();
         }
 
-        List<Event> events = eventRepository.findEventsPublic(text, categories, paid, start, end, onlyAvailable, page);
+        List<Event> events = eventRepository.findEventsPublic(text, categories, paid, start, end, page);
+
+        // Фильтрация по onlyAvailable
+        if (Boolean.TRUE.equals(onlyAvailable)) {
+            events = events.stream()
+                    .filter(event -> event.getParticipantLimit() == 0 ||
+                            (event.getConfirmedRequests() != null &&
+                                    event.getConfirmedRequests() < event.getParticipantLimit()))
+                    .collect(Collectors.toList());
+        }
 
         if (events.isEmpty()) {
             return List.of();
@@ -287,22 +320,7 @@ public class EventServiceImpl implements EventService {
         try {
             return LocalDateTime.parse(dateTime, FORMATTER);
         } catch (DateTimeParseException e) {
-            throw new ValidationException("Invalid date format: " + dateTime + ", expected format: yyyy-MM-dd HH:mm:ss");
-        }
-    }
-
-    private void validatePagination(Integer from, Integer size) {
-        if (from == null) {
-            from = 0;
-        }
-        if (size == null) {
-            size = 10;
-        }
-        if (from < 0) {
-            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
-        }
-        if (size <= 0) {
-            throw new ValidationException("Parameter 'size' must be greater than 0");
+            throw new ValidationException("Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss");
         }
     }
 

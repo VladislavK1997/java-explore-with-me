@@ -119,9 +119,17 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleDataIntegrityViolationException(DataIntegrityViolationException e) {
         log.error("Data integrity violation: {}", e.getMessage(), e);
+        String message = "Integrity constraint has been violated.";
+        if (e.getMessage() != null && e.getMessage().contains("uq_category_name")) {
+            message = "Category name must be unique";
+        } else if (e.getMessage() != null && e.getMessage().contains("uq_email")) {
+            message = "Email must be unique";
+        } else if (e.getMessage() != null && e.getMessage().contains("uq_compilation_name")) {
+            message = "Compilation title must be unique";
+        }
         return new ApiError(
                 List.of(e.toString()),
-                "Integrity constraint has been violated.",
+                message,
                 "Integrity constraint has been violated.",
                 "CONFLICT",
                 LocalDateTime.now()

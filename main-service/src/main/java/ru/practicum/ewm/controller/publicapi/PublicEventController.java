@@ -1,6 +1,7 @@
 package ru.practicum.ewm.controller.publicapi;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -25,10 +26,10 @@ public class PublicEventController {
                                          @RequestParam(required = false) Boolean paid,
                                          @RequestParam(required = false) String rangeStart,
                                          @RequestParam(required = false) String rangeEnd,
-                                         @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,
+                                         @RequestParam(required = false) Boolean onlyAvailable,
                                          @RequestParam(required = false) String sort,
-                                         @RequestParam(defaultValue = "0", required = false) Integer from,
-                                         @RequestParam(defaultValue = "10", required = false) Integer size,
+                                         @RequestParam(defaultValue = "0", required = false) @Min(0) Integer from,
+                                         @RequestParam(defaultValue = "10", required = false) @Min(1) Integer size,
                                          HttpServletRequest request) {
         log.info("Getting events with filters: text={}, categories={}, paid={}, " +
                         "rangeStart={}, rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",
@@ -36,7 +37,7 @@ public class PublicEventController {
 
         String ip = request.getRemoteAddr();
         return eventService.getEventsPublic(text, categories, paid, rangeStart, rangeEnd,
-                onlyAvailable, sort, from, size, ip);
+                onlyAvailable != null ? onlyAvailable : false, sort, from, size, ip);
     }
 
     @GetMapping("/{id}")

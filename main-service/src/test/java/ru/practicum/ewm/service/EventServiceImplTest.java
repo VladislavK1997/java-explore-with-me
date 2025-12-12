@@ -10,10 +10,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.ewm.dto.*;
-import ru.practicum.ewm.exception.ConflictException;
-import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
-import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
@@ -26,7 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ActiveProfiles("test")
@@ -154,7 +151,7 @@ class EventServiceImplTest {
 
         Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
         when(eventRepository.findEventsPublic(
-                eq(text), eq(categories), eq(paid), any(), any(), eq(onlyAvailable), any(PageRequest.class)))
+                eq(text), eq(categories), eq(paid), any(), any(), any(PageRequest.class)))
                 .thenReturn(eventPage.getContent());
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
@@ -166,7 +163,7 @@ class EventServiceImplTest {
         assertEquals("Test Event 2", result.get(1).getTitle());
         verify(statsService, times(1)).saveHit("/events", ip);
         verify(eventRepository, times(1)).findEventsPublic(
-                eq(text), eq(categories), eq(paid), any(), any(), eq(onlyAvailable), any(PageRequest.class));
+                eq(text), eq(categories), eq(paid), any(), any(), any(PageRequest.class));
         verify(statsService, times(1)).getViews(List.of(1L, 2L));
     }
 
@@ -207,5 +204,162 @@ class EventServiceImplTest {
         ValidationException exception2 = assertThrows(ValidationException.class,
                 () -> eventService.getEventsByUser(userId, 0, 0));
         assertTrue(exception2.getMessage().contains("Parameter 'size' must be greater than 0"));
+    }
+
+    @Test
+    void createEvent_ValidData_ReturnsEventFullDto() {
+        Long userId = 1L;
+        NewEventDto newEventDto = new NewEventDto(
+                "Annotation with at least 20 characters",
+                1L,
+                "Description with at least 20 characters",
+                futureDate.plusHours(2),
+                new LocationDto(55.754167f, 37.62f),
+                true,
+                100,
+                true,
+                "Test Event"
+        );
+
+        User user = User.builder().id(userId).name("John Doe").build();
+        Category category = Category.builder().id(1L).name("Concerts").build();
+        Event event = Event.builder()
+                .id(1L)
+                .title("Test Event")
+                .annotation("Annotation with at least 20 characters")
+                .description("Description with at least 20 characters")
+                .eventDate(futureDate.plusHours(2))
+                .initiator(user)
+                .category(category)
+                .paid(true)
+                .participantLimit(100)
+                .requestModeration(true)
+                .state(EventState.PENDING)
+                .build();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
+        when(eventRepository.save(any(Event.class))).thenReturn(event);
+
+        EventFullDto result = eventService.createEvent(userId, newEventDto);
+
+        assertNotNull(result);
+        assertEquals("Test Event", result.getTitle());
+        verify(userRepository, times(1)).findById(userId);
+        verify(categoryRepository, times(1)).findById(1L);
+        verify(eventRepository, times(1)).save(any(Event.class));
+    }
+
+    @Test
+    void getEventPublic_ValidId_ReturnsEventFullDto() {
+        Long eventId = 1L;
+        String ip = "192.168.1.1";
+
+        Event event = Event.builder()
+                .id(eventId)
+                .title("Test Event")
+                .annotation("Annotation")
+                .description("Description")
+                .state(EventState.PUBLISHED)
+                .eventDate(futureDate)
+                .initiator(User.builder().id(1L).name("John Doe").build())
+                .category(Category.builder().id(1L).name("Concerts").build())
+                .paid(true)
+                .participantLimit(100)
+                .confirmedRequests(50)
+                .views(100L)
+                .build();
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(statsService.getViews(List.of(eventId))).thenReturn(Map.of(eventId, 100L));
+
+        EventFullDto result = eventService.getEventPublic(eventId, ip);
+
+        assertNotNull(result);
+        assertEquals(eventId, result.getId());
+        verify(eventRepository, times(1)).findById(eventId);
+        verify(statsService, times(1)).getViews(List.of(eventId));
+        verify(statsService, times(1)).saveHit("/events/" + eventId, ip);
+    }
+
+    @Test
+    void getEventPublic_NotPublished_ThrowsNotFoundException() {
+        Long eventId = 1L;
+        String ip = "192.168.1.1";
+
+        Event event = Event.builder()
+                .id(eventId)
+                .title("Test Event")
+                .state(EventState.PENDING)
+                .build();
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        ru.practicum.ewm.exception.NotFoundException exception =
+                assertThrows(ru.practicum.ewm.exception.NotFoundException.class,
+                        () -> eventService.getEventPublic(eventId, ip));
+
+        assertTrue(exception.getMessage().contains("Event with id=" + eventId));
+        verify(eventRepository, times(1)).findById(eventId);
+        verify(statsService, never()).getViews(any());
+        verify(statsService, never()).saveHit(any(), any());
+    }
+
+    @Test
+    void getEventsPublic_WithOnlyAvailableTrue_FiltersAvailableEvents() {
+        String ip = "192.168.1.1";
+        Boolean onlyAvailable = true;
+
+        Event event1 = Event.builder()
+                .id(1L)
+                .title("Event 1 - Available")
+                .annotation("Annotation 1")
+                .state(EventState.PUBLISHED)
+                .eventDate(futureDate)
+                .initiator(User.builder().id(1L).build())
+                .category(Category.builder().id(1L).build())
+                .paid(true)
+                .participantLimit(100)
+                .confirmedRequests(50)
+                .build();
+
+        Event event2 = Event.builder()
+                .id(2L)
+                .title("Event 2 - Not Available")
+                .annotation("Annotation 2")
+                .state(EventState.PUBLISHED)
+                .eventDate(futureDate.plusHours(1))
+                .initiator(User.builder().id(2L).build())
+                .category(Category.builder().id(2L).build())
+                .paid(true)
+                .participantLimit(10)
+                .confirmedRequests(10)
+                .build();
+
+        Event event3 = Event.builder()
+                .id(3L)
+                .title("Event 3 - No Limit")
+                .annotation("Annotation 3")
+                .state(EventState.PUBLISHED)
+                .eventDate(futureDate.plusHours(2))
+                .initiator(User.builder().id(3L).build())
+                .category(Category.builder().id(3L).build())
+                .paid(true)
+                .participantLimit(0)
+                .confirmedRequests(100)
+                .build();
+
+        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2, event3));
+        when(eventRepository.findEventsPublic(
+                any(), any(), any(), any(), any(), any(PageRequest.class)))
+                .thenReturn(eventPage.getContent());
+        when(statsService.getViews(any())).thenReturn(Map.of());
+
+        List<EventShortDto> result = eventService.getEventsPublic(
+                null, null, null, null, null, onlyAvailable, null, 0, 10, ip);
+
+        assertEquals(2, result.size()); // event1 и event3
+        verify(eventRepository, times(1)).findEventsPublic(
+                any(), any(), any(), any(), any(), any(PageRequest.class));
     }
 }

@@ -25,6 +25,7 @@ public class Event {
     private Category category;
 
     @Column(name = "confirmed_requests")
+    @Builder.Default
     private Integer confirmedRequests = 0;
 
     @CreationTimestamp
@@ -49,24 +50,29 @@ public class Event {
     private Location location;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean paid = false;
 
     @Column(name = "participant_limit")
+    @Builder.Default
     private Integer participantLimit = 0;
 
     @Column(name = "published_on")
     private LocalDateTime publishedOn;
 
     @Column(name = "request_moderation")
+    @Builder.Default
     private Boolean requestModeration = true;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private EventState state = EventState.PENDING;
 
     @Column(nullable = false, length = 120)
     private String title;
 
     @Transient
+    @Builder.Default
     private Long views = 0L;
 }
