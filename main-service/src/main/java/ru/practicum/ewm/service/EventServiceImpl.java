@@ -37,12 +37,7 @@ public class EventServiceImpl implements EventService {
         if (from == null) from = 0;
         if (size == null) size = 10;
 
-        if (from < 0) {
-            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
-        }
-        if (size <= 0) {
-            throw new ValidationException("Parameter 'size' must be greater than 0");
-        }
+        validatePaginationParams(from, size);
 
         int pageNumber = from / size;
         PageRequest page = PageRequest.of(pageNumber, size, Sort.by("id").ascending());
@@ -132,12 +127,7 @@ public class EventServiceImpl implements EventService {
         if (from == null) from = 0;
         if (size == null) size = 10;
 
-        if (from < 0) {
-            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
-        }
-        if (size <= 0) {
-            throw new ValidationException("Parameter 'size' must be greater than 0");
-        }
+        validatePaginationParams(from, size);
 
         int pageNumber = from / size;
         PageRequest page = PageRequest.of(pageNumber, size, Sort.by("eventDate").descending());
@@ -239,17 +229,12 @@ public class EventServiceImpl implements EventService {
         if (size == null) size = 10;
         if (onlyAvailable == null) onlyAvailable = false;
 
-        if (from < 0) {
-            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
-        }
-        if (size <= 0) {
-            throw new ValidationException("Parameter 'size' must be greater than 0");
-        }
+        validatePaginationParams(from, size);
 
-        String sortParam = null;
+        // Валидация параметра sort
         if (sort != null && !sort.isEmpty()) {
-            sortParam = sort.toUpperCase();
-            if (!sortParam.equals("EVENT_DATE") && !sortParam.equals("VIEWS")) {
+            String sortUpper = sort.toUpperCase();
+            if (!sortUpper.equals("EVENT_DATE") && !sortUpper.equals("VIEWS")) {
                 throw new ValidationException("Invalid sort parameter: " + sort);
             }
         }
@@ -267,7 +252,7 @@ public class EventServiceImpl implements EventService {
 
         int pageNumber = from / size;
         PageRequest page;
-        if (sortParam != null && sortParam.equals("EVENT_DATE")) {
+        if (sort != null && sort.toUpperCase().equals("EVENT_DATE")) {
             page = PageRequest.of(pageNumber, size, Sort.by("eventDate").descending());
         } else {
             page = PageRequest.of(pageNumber, size);
@@ -311,7 +296,7 @@ public class EventServiceImpl implements EventService {
                 })
                 .collect(Collectors.toList());
 
-        if (sortParam != null && sortParam.equals("VIEWS")) {
+        if (sort != null && sort.toUpperCase().equals("VIEWS")) {
             result.sort(Comparator.comparing(EventShortDto::getViews).reversed());
         }
 
@@ -354,6 +339,15 @@ public class EventServiceImpl implements EventService {
             return LocalDateTime.parse(dateTime, FORMATTER);
         } catch (DateTimeParseException e) {
             throw new ValidationException("Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss");
+        }
+    }
+
+    private void validatePaginationParams(Integer from, Integer size) {
+        if (from < 0) {
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+        }
+        if (size <= 0) {
+            throw new ValidationException("Parameter 'size' must be greater than 0");
         }
     }
 
