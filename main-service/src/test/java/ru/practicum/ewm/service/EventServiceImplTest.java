@@ -78,10 +78,9 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
-        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
         when(eventRepository.findByInitiatorId(userId,
                 PageRequest.of(0, 10, Sort.by("eventDate").descending())))
-                .thenReturn(eventPage.getContent());
+                .thenReturn(List.of(event1, event2));
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
         List<EventShortDto> result = eventService.getEventsByUser(userId, 0, 10);
@@ -197,11 +196,11 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
-        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
         when(eventRepository.findEventsPublic(
                 eq(text), eq(categories), eq(paid), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class)))
-                .thenReturn(eventPage.getContent());
+                .thenReturn(List.of(event1, event2));
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
+        doNothing().when(statsService).saveHit("/events", ip);
 
         List<EventShortDto> result = eventService.getEventsPublic(
                 text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, ip);
@@ -234,11 +233,11 @@ class EventServiceImplTest {
                 .views(100L)
                 .build();
 
-        Page<Event> eventPage = new PageImpl<>(List.of(event));
         when(eventRepository.findEventsPublic(
                 isNull(), isNull(), isNull(), any(), isNull(), eq(EventState.PUBLISHED), any(PageRequest.class)))
-                .thenReturn(eventPage.getContent());
+                .thenReturn(List.of(event));
         when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 100L));
+        doNothing().when(statsService).saveHit("/events", ip);
 
         List<EventShortDto> result = eventService.getEventsPublic(
                 "", List.of(), null, null, null, false, null, 0, 10, ip);
@@ -320,11 +319,12 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
-        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
         when(eventRepository.findEventsPublic(
                 isNull(), isNull(), isNull(), any(), isNull(), eq(EventState.PUBLISHED), any(PageRequest.class)))
-                .thenReturn(eventPage.getContent());
-        when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
+                .thenReturn(List.of(event1, event2));
+        // Используем lenient stubbing для getViews
+        lenient().when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
+        doNothing().when(statsService).saveHit("/events", ip);
 
         List<EventShortDto> result = eventService.getEventsPublic(
                 null, null, null, null, null, true, null, 0, 10, ip);
@@ -367,11 +367,11 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
-        Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
         when(eventRepository.findEventsPublic(
                 isNull(), isNull(), isNull(), any(), isNull(), eq(EventState.PUBLISHED), any(PageRequest.class)))
-                .thenReturn(eventPage.getContent());
+                .thenReturn(List.of(event1, event2));
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
+        doNothing().when(statsService).saveHit("/events", ip);
 
         List<EventShortDto> result = eventService.getEventsPublic(
                 null, null, null, null, null, false, "VIEWS", 0, 10, ip);
@@ -474,6 +474,7 @@ class EventServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(statsService.getViews(List.of(eventId))).thenReturn(Map.of(eventId, 100L));
+        doNothing().when(statsService).saveHit("/events/" + eventId, ip);
 
         EventFullDto result = eventService.getEventPublic(eventId, ip);
 
@@ -571,7 +572,6 @@ class EventServiceImplTest {
         updateRequest.setStateAction("SEND_TO_REVIEW");
 
         when(eventRepository.findByIdAndInitiatorId(eventId, userId)).thenReturn(Optional.of(event));
-        when(categoryRepository.findById(any())).thenReturn(Optional.of(Category.builder().id(1L).name("Concerts").build()));
         when(eventRepository.save(any(Event.class))).thenReturn(event);
         when(statsService.getViews(List.of(eventId))).thenReturn(Map.of(eventId, 0L));
 
@@ -580,6 +580,7 @@ class EventServiceImplTest {
         assertNotNull(result);
         assertEquals("New Title", result.getTitle());
         assertEquals(EventState.PENDING, result.getState());
+        verify(eventRepository, times(1)).save(any(Event.class));
     }
 
     @Test
@@ -670,7 +671,6 @@ class EventServiceImplTest {
         updateRequest.setStateAction("PUBLISH_EVENT");
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
-        when(categoryRepository.findById(any())).thenReturn(Optional.of(Category.builder().id(1L).name("Concerts").build()));
         when(eventRepository.save(any(Event.class))).thenReturn(event);
         when(statsService.getViews(List.of(eventId))).thenReturn(Map.of(eventId, 0L));
 
@@ -679,6 +679,7 @@ class EventServiceImplTest {
         assertNotNull(result);
         assertEquals("New Title", result.getTitle());
         assertEquals(EventState.PUBLISHED, result.getState());
+        verify(eventRepository, times(1)).save(any(Event.class));
     }
 
     @Test
@@ -798,8 +799,9 @@ class EventServiceImplTest {
 
     @Test
     void getEventsByAdmin_WithEmptyLists_ReturnsEmptyList() {
-        when(eventRepository.findEventsByAdmin(
-                isNull(), isNull(), isNull(), isNull(), isNull(), any(PageRequest.class)))
+        // Используем lenient stubbing для пустых списков
+        lenient().when(eventRepository.findEventsByAdmin(
+                        eq(List.of()), any(), eq(List.of()), isNull(), isNull(), any(PageRequest.class)))
                 .thenReturn(List.of());
 
         List<EventFullDto> result = eventService.getEventsByAdmin(
