@@ -12,33 +12,33 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NewEventDto {
-    @NotBlank
-    @Size(min = 20, max = 2000)
+    @NotBlank(message = "Annotation is required")
+    @Size(min = 20, max = 2000, message = "Annotation must be between 20 and 2000 characters")
     private String annotation;
 
-    @NotNull
+    @NotNull(message = "Category is required")
     private Long category;
 
-    @NotBlank
-    @Size(min = 20, max = 7000)
+    @NotBlank(message = "Description is required")
+    @Size(min = 20, max = 7000, message = "Description must be between 20 and 7000 characters")
     private String description;
 
-    @NotNull
-    @Future
+    @NotNull(message = "Event date is required")
+    @Future(message = "Event date must be in the future")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
 
-    @NotNull
+    @NotNull(message = "Location is required")
     private LocationDto location;
 
     private Boolean paid = false;
 
-    @Min(0)
+    @Min(value = 0, message = "Participant limit must be greater than or equal to 0")
     private Integer participantLimit = 0;
 
     private Boolean requestModeration = true;
 
-    @NotBlank
-    @Size(min = 3, max = 120)
+    @NotBlank(message = "Title is required")
+    @Size(min = 3, max = 120, message = "Title must be between 3 and 120 characters")
     private String title;
 }

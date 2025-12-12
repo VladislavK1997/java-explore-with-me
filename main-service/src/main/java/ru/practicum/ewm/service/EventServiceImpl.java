@@ -35,7 +35,8 @@ public class EventServiceImpl implements EventService {
                                                String rangeStart, String rangeEnd, Integer from, Integer size) {
         validatePagination(from, size);
 
-        PageRequest page = PageRequest.of(from / size, size);
+        int pageNumber = from / size;
+        PageRequest page = PageRequest.of(pageNumber, size);
 
         List<EventState> eventStates = null;
         if (states != null && !states.isEmpty()) {
@@ -52,6 +53,10 @@ public class EventServiceImpl implements EventService {
         LocalDateTime end = parseDateTime(rangeEnd);
 
         List<Event> events = eventRepository.findEventsByAdmin(users, eventStates, categories, start, end, page);
+
+        if (events.isEmpty()) {
+            return List.of();
+        }
 
         Map<Long, Long> views = statsService.getViews(events.stream()
                 .map(Event::getId)
@@ -107,8 +112,13 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size) {
         validatePagination(from, size);
 
-        PageRequest page = PageRequest.of(from / size, size);
+        int pageNumber = from / size;
+        PageRequest page = PageRequest.of(pageNumber, size);
         List<Event> events = eventRepository.findByInitiatorId(userId, page);
+
+        if (events.isEmpty()) {
+            return List.of();
+        }
 
         Map<Long, Long> views = statsService.getViews(events.stream()
                 .map(Event::getId)
@@ -204,13 +214,12 @@ public class EventServiceImpl implements EventService {
 
         statsService.saveHit("/events", ip);
 
+        int pageNumber = from / size;
         PageRequest page;
         if ("EVENT_DATE".equals(sort)) {
-            page = PageRequest.of(from / size, size, Sort.by("eventDate").descending());
-        } else if ("VIEWS".equals(sort)) {
-            page = PageRequest.of(from / size, size);
+            page = PageRequest.of(pageNumber, size, Sort.by("eventDate").descending());
         } else {
-            page = PageRequest.of(from / size, size);
+            page = PageRequest.of(pageNumber, size);
         }
 
         LocalDateTime start = parseDateTime(rangeStart);
@@ -221,6 +230,10 @@ public class EventServiceImpl implements EventService {
         }
 
         List<Event> events = eventRepository.findEventsPublic(text, categories, paid, start, end, onlyAvailable, page);
+
+        if (events.isEmpty()) {
+            return List.of();
+        }
 
         Map<Long, Long> views = statsService.getViews(events.stream()
                 .map(Event::getId)

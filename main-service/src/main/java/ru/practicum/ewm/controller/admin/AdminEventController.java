@@ -1,7 +1,6 @@
 package ru.practicum.ewm.controller.admin;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -26,12 +25,10 @@ public class AdminEventController {
                                         @RequestParam(required = false) List<Long> categories,
                                         @RequestParam(required = false) String rangeStart,
                                         @RequestParam(required = false) String rangeEnd,
-                                        @RequestParam(required = false, defaultValue = "0") @Min(0) Integer from,
-                                        @RequestParam(required = false, defaultValue = "10") @Min(1) Integer size) {
+                                        @RequestParam(required = false, defaultValue = "0") Integer from,
+                                        @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.info("Getting events by admin with filters");
-        int pageFrom = Math.max(from, 0);
-        int pageSize = size <= 0 ? 10 : size;
-        return eventService.getEventsByAdmin(users, states, categories, rangeStart, rangeEnd, pageFrom, pageSize);
+        return eventService.getEventsByAdmin(users, states, categories, rangeStart, rangeEnd, from, size);
     }
 
     @PatchMapping("/{eventId}")
