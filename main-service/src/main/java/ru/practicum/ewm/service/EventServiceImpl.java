@@ -208,8 +208,8 @@ public class EventServiceImpl implements EventService {
                                                String sort, Integer from, Integer size, String ip) {
         validatePagination(from, size);
 
-        if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
-            throw new ValidationException("Invalid sort parameter: " + sort);
+        if (text != null && text.length() > 7000) {
+            throw new ValidationException("Text length must be less than or equal to 7000 characters");
         }
 
         statsService.saveHit("/events", ip);
@@ -218,8 +218,10 @@ public class EventServiceImpl implements EventService {
         PageRequest page;
         if ("EVENT_DATE".equals(sort)) {
             page = PageRequest.of(pageNumber, size, Sort.by("eventDate").descending());
-        } else {
+        } else if ("VIEWS".equals(sort) || sort == null) {
             page = PageRequest.of(pageNumber, size);
+        } else {
+            throw new ValidationException("Invalid sort parameter: " + sort);
         }
 
         LocalDateTime start = parseDateTime(rangeStart);

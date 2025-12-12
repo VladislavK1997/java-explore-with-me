@@ -55,7 +55,6 @@ public class StatsService {
                         String idStr = uri.substring("/events/".length());
                         Long eventId = Long.parseLong(idStr);
                         if (eventIds.contains(eventId)) {
-                            // Берем максимальное значение
                             Long currentViews = viewsMap.get(eventId);
                             if (stat.getHits() > currentViews) {
                                 viewsMap.put(eventId, stat.getHits());

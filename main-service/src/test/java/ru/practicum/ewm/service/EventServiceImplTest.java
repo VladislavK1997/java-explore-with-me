@@ -767,14 +767,13 @@ class EventServiceImplTest {
         Page<Event> emptyPage = new PageImpl<>(List.of());
         when(eventRepository.findByInitiatorId(userId, PageRequest.of(0, 10)))
                 .thenReturn(emptyPage.getContent());
-        when(statsService.getViews(List.of())).thenReturn(Map.of());
 
         List<EventShortDto> result = eventService.getEventsByUser(userId, 0, 10);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(eventRepository, times(1)).findByInitiatorId(userId, PageRequest.of(0, 10));
-        verify(statsService, times(1)).getViews(List.of());
+        verify(statsService, never()).getViews(any());
     }
 
     @Test
