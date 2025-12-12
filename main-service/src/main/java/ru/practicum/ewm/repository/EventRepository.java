@@ -30,7 +30,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                   Pageable pageable);
 
     @Query("SELECT e FROM Event e " +
-            "WHERE e.state = 'PUBLISHED' " +
+            "WHERE e.state = :publishedState " +
             "AND (:text IS NULL OR LOWER(e.annotation) LIKE LOWER(CONCAT('%', :text, '%')) " +
             "OR LOWER(e.description) LIKE LOWER(CONCAT('%', :text, '%'))) " +
             "AND (:categories IS NULL OR e.category.id IN :categories) " +
@@ -42,6 +42,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                  @Param("paid") Boolean paid,
                                  @Param("rangeStart") LocalDateTime rangeStart,
                                  @Param("rangeEnd") LocalDateTime rangeEnd,
+                                 @Param("publishedState") EventState publishedState,
                                  Pageable pageable);
 
     List<Event> findByIdIn(List<Long> eventIds);

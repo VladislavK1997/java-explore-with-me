@@ -51,7 +51,7 @@ public class EventServiceImpl implements EventService {
         if (states != null && !states.isEmpty()) {
             try {
                 eventStates = states.stream()
-                        .map(EventState::valueOf)
+                        .map(state -> EventState.valueOf(state.toUpperCase()))
                         .collect(Collectors.toList());
             } catch (IllegalArgumentException e) {
                 throw new ValidationException("Invalid state value in states parameter");
@@ -237,6 +237,24 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Invalid sort parameter: " + sort);
         }
 
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        try {
+            start = parseDateTime(rangeStart);
+            end = parseDateTime(rangeEnd);
+        } catch (ValidationException e) {
+            throw new ValidationException("Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss");
+        }
+
+        if (start == null) {
+            start = LocalDateTime.now();
+        }
+
+        if (end != null && start.isAfter(end)) {
+            throw new ValidationException("rangeStart must be before rangeEnd");
+        }
+
         int pageNumber = from / size;
         PageRequest page;
         if ("EVENT_DATE".equals(sort)) {
@@ -245,21 +263,12 @@ public class EventServiceImpl implements EventService {
             page = PageRequest.of(pageNumber, size);
         }
 
-        LocalDateTime start = parseDateTime(rangeStart);
-        LocalDateTime end = parseDateTime(rangeEnd);
+        List<Event> events = eventRepository.findEventsPublic(text, categories, paid, start, end, EventState.PUBLISHED, page);
 
-        if (start == null) {
-            start = LocalDateTime.now();
-        }
-
-        List<Event> events = eventRepository.findEventsPublic(text, categories, paid, start, end, page);
-
-        // Фильтрация по onlyAvailable
         if (Boolean.TRUE.equals(onlyAvailable)) {
             events = events.stream()
                     .filter(event -> event.getParticipantLimit() == 0 ||
-                            (event.getConfirmedRequests() != null &&
-                                    event.getConfirmedRequests() < event.getParticipantLimit()))
+                            event.getConfirmedRequests() < event.getParticipantLimit())
                     .collect(Collectors.toList());
         }
 

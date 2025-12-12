@@ -151,7 +151,7 @@ class EventServiceImplTest {
 
         Page<Event> eventPage = new PageImpl<>(List.of(event1, event2));
         when(eventRepository.findEventsPublic(
-                eq(text), eq(categories), eq(paid), any(), any(), any(PageRequest.class)))
+                eq(text), eq(categories), eq(paid), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class)))
                 .thenReturn(eventPage.getContent());
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
@@ -163,7 +163,7 @@ class EventServiceImplTest {
         assertEquals("Test Event 2", result.get(1).getTitle());
         verify(statsService, times(1)).saveHit("/events", ip);
         verify(eventRepository, times(1)).findEventsPublic(
-                eq(text), eq(categories), eq(paid), any(), any(), any(PageRequest.class));
+                eq(text), eq(categories), eq(paid), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class));
         verify(statsService, times(1)).getViews(List.of(1L, 2L));
     }
 
@@ -351,7 +351,7 @@ class EventServiceImplTest {
 
         Page<Event> eventPage = new PageImpl<>(List.of(event1, event2, event3));
         when(eventRepository.findEventsPublic(
-                any(), any(), any(), any(), any(), any(PageRequest.class)))
+                any(), any(), any(), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class)))
                 .thenReturn(eventPage.getContent());
         when(statsService.getViews(any())).thenReturn(Map.of());
 
@@ -360,6 +360,6 @@ class EventServiceImplTest {
 
         assertEquals(2, result.size()); // event1 и event3
         verify(eventRepository, times(1)).findEventsPublic(
-                any(), any(), any(), any(), any(), any(PageRequest.class));
+                any(), any(), any(), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class));
     }
 }
