@@ -259,6 +259,12 @@ class PublicEventControllerTest {
 
     @Test
     void getEvents_WithInvalidSortParameter_ReturnsBadRequest() throws Exception {
+        // Настраиваем заглушку так, чтобы она бросала исключение при неверном sort
+        when(eventService.getEventsPublic(
+                isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), eq("INVALID_SORT"), eq(0), eq(10), anyString()))
+                .thenThrow(new ru.practicum.ewm.exception.ValidationException("Invalid sort parameter: INVALID_SORT"));
+
         mockMvc.perform(get("/events")
                         .param("sort", "INVALID_SORT"))
                 .andExpect(status().isBadRequest());
@@ -266,6 +272,7 @@ class PublicEventControllerTest {
 
     @Test
     void getEvents_WithInvalidFromParameter_ReturnsBadRequest() throws Exception {
+        // Spring сама проверяет @Min(0) для from, поэтому Mockito не нужен
         mockMvc.perform(get("/events")
                         .param("from", "-1"))
                 .andExpect(status().isBadRequest());
@@ -273,6 +280,7 @@ class PublicEventControllerTest {
 
     @Test
     void getEvents_WithInvalidSizeParameter_ReturnsBadRequest() throws Exception {
+        // Spring сама проверяет @Min(1) для size, поэтому Mockito не нужен
         mockMvc.perform(get("/events")
                         .param("size", "0"))
                 .andExpect(status().isBadRequest());
@@ -280,6 +288,12 @@ class PublicEventControllerTest {
 
     @Test
     void getEvents_WithStartDateAfterEndDate_ReturnsBadRequest() throws Exception {
+        // Настраиваем заглушку так, чтобы она бросала исключение при start > end
+        when(eventService.getEventsPublic(
+                isNull(), isNull(), isNull(), eq("2024-12-31 23:59:59"), eq("2024-01-01 00:00:00"),
+                eq(false), isNull(), eq(0), eq(10), anyString()))
+                .thenThrow(new ru.practicum.ewm.exception.ValidationException("rangeStart must be before rangeEnd"));
+
         mockMvc.perform(get("/events")
                         .param("rangeStart", "2024-12-31 23:59:59")
                         .param("rangeEnd", "2024-01-01 00:00:00"))
@@ -479,6 +493,12 @@ class PublicEventControllerTest {
 
     @Test
     void getEvents_WithInvalidDateFormat_ReturnsBadRequest() throws Exception {
+        // Настраиваем заглушку так, чтобы она бросала исключение при неверном формате даты
+        when(eventService.getEventsPublic(
+                isNull(), isNull(), isNull(), eq("invalid-date"), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString()))
+                .thenThrow(new ru.practicum.ewm.exception.ValidationException("Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss"));
+
         mockMvc.perform(get("/events")
                         .param("rangeStart", "invalid-date"))
                 .andExpect(status().isBadRequest());
