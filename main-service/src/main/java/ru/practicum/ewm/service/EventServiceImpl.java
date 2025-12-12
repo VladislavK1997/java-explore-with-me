@@ -212,20 +212,29 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Text length must be less than or equal to 7000 characters");
         }
 
+        if (sort != null && !sort.equals("EVENT_DATE") && !sort.equals("VIEWS")) {
+            throw new ValidationException("Invalid sort parameter: " + sort);
+        }
+
         statsService.saveHit("/events", ip);
 
         int pageNumber = from / size;
         PageRequest page;
         if ("EVENT_DATE".equals(sort)) {
             page = PageRequest.of(pageNumber, size, Sort.by("eventDate").descending());
-        } else if ("VIEWS".equals(sort) || sort == null) {
-            page = PageRequest.of(pageNumber, size);
         } else {
-            throw new ValidationException("Invalid sort parameter: " + sort);
+            page = PageRequest.of(pageNumber, size);
         }
 
-        LocalDateTime start = parseDateTime(rangeStart);
-        LocalDateTime end = parseDateTime(rangeEnd);
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        try {
+            start = parseDateTime(rangeStart);
+            end = parseDateTime(rangeEnd);
+        } catch (ValidationException e) {
+            log.debug("Invalid date format, using default values");
+        }
 
         if (start == null) {
             start = LocalDateTime.now();

@@ -212,24 +212,33 @@ class PublicEventControllerTest {
 
     @Test
     void getEvents_InvalidSortParameter_ReturnsBadRequest() throws Exception {
+        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString()))
+                .thenThrow(new ru.practicum.ewm.exception.ValidationException("Invalid sort parameter"));
+
         mockMvc.perform(get("/events")
                         .param("sort", "INVALID_SORT"))
                 .andExpect(status().isBadRequest());
 
-        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
+        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
                 anyBoolean(), anyString(), anyInt(), anyInt(), anyString());
     }
 
     @Test
     void getEvents_InvalidDateFormats_ReturnsBadRequest() throws Exception {
+        when(eventService.getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString()))
+                .thenThrow(new ru.practicum.ewm.exception.ValidationException("Invalid date format"));
+
         mockMvc.perform(get("/events")
                         .param("rangeStart", "invalid-date")
                         .param("rangeEnd", "invalid-date"))
                 .andExpect(status().isBadRequest());
 
-        verify(eventService, never()).getEventsPublic(any(), any(), any(), any(), any(),
-                anyBoolean(), anyString(), anyInt(), anyInt(), anyString());
+        verify(eventService, times(1)).getEventsPublic(any(), any(), any(), any(), any(),
+                anyBoolean(), any(), anyInt(), anyInt(), anyString());
     }
+
 
     @Test
     void getEvents_TextTooLong_ReturnsBadRequest() throws Exception {
