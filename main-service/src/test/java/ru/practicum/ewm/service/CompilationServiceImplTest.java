@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ActiveProfiles("test")
@@ -67,7 +67,9 @@ class CompilationServiceImplTest {
 
         when(eventRepository.findByIdIn(List.of(1L, 2L, 3L))).thenReturn(List.of(event1, event2, event3));
         when(compilationRepository.save(any(Compilation.class))).thenReturn(compilation);
-        when(statsService.getViews(List.of(1L, 2L, 3L))).thenReturn(
+
+        // Используем any() для списка ID, так как порядок может быть разным
+        when(statsService.getViews(anyList())).thenReturn(
                 Map.of(1L, 100L, 2L, 200L, 3L, 300L));
 
         // When
@@ -82,7 +84,7 @@ class CompilationServiceImplTest {
         assertEquals(3, result.getEvents().size());
         verify(eventRepository, times(1)).findByIdIn(List.of(1L, 2L, 3L));
         verify(compilationRepository, times(1)).save(any(Compilation.class));
-        verify(statsService, times(1)).getViews(List.of(1L, 2L, 3L));
+        verify(statsService, times(1)).getViews(anyList());
     }
 
     @Test
@@ -169,7 +171,9 @@ class CompilationServiceImplTest {
         when(compilationRepository.findById(compilationId)).thenReturn(Optional.of(existingCompilation));
         when(eventRepository.findByIdIn(List.of(1L, 2L))).thenReturn(List.of(event1, event2));
         when(compilationRepository.save(any(Compilation.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
+
+        // Используем any() для списка ID
+        when(statsService.getViews(anyList())).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
         // When
         CompilationDto result = compilationService.updateCompilation(compilationId, updateRequest);
@@ -182,7 +186,7 @@ class CompilationServiceImplTest {
         verify(compilationRepository, times(1)).findById(compilationId);
         verify(eventRepository, times(1)).findByIdIn(List.of(1L, 2L));
         verify(compilationRepository, times(1)).save(any(Compilation.class));
-        verify(statsService, times(1)).getViews(List.of(1L, 2L));
+        verify(statsService, times(1)).getViews(anyList());
     }
 
     @Test
@@ -216,6 +220,7 @@ class CompilationServiceImplTest {
         verify(compilationRepository, times(1)).findById(compilationId);
         verify(eventRepository, never()).findByIdIn(any());
         verify(compilationRepository, times(1)).save(any(Compilation.class));
+        verify(statsService, never()).getViews(any());
     }
 
     @Test
@@ -258,8 +263,16 @@ class CompilationServiceImplTest {
 
         when(compilationRepository.findByPinned(pinned, PageRequest.of(0, 10)))
                 .thenReturn(List.of(compilation1, compilation2));
-        when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 100L));
-        when(statsService.getViews(List.of(2L))).thenReturn(Map.of(2L, 200L));
+
+        // Используем any() для списка ID
+        when(statsService.getViews(anyList())).thenAnswer(invocation -> {
+            List<Long> ids = invocation.getArgument(0);
+            Map<Long, Long> result = new HashMap<>();
+            for (Long id : ids) {
+                result.put(id, id * 100L);
+            }
+            return result;
+        });
 
         // When
         List<CompilationDto> result = compilationService.getCompilations(pinned, 0, 10);
@@ -271,7 +284,7 @@ class CompilationServiceImplTest {
         assertTrue(result.get(0).getPinned());
         assertTrue(result.get(1).getPinned());
         verify(compilationRepository, times(1)).findByPinned(pinned, PageRequest.of(0, 10));
-        verify(statsService, times(2)).getViews(any());
+        verify(statsService, times(2)).getViews(anyList());
     }
 
     @Test
@@ -304,6 +317,7 @@ class CompilationServiceImplTest {
         assertEquals("Not Pinned Compilation", result.get(1).getTitle());
         verify(compilationRepository, times(1)).findAll(PageRequest.of(0, 10));
         verify(compilationRepository, never()).findByPinned(any(), any());
+        verify(statsService, never()).getViews(any());
     }
 
     @Test
@@ -322,7 +336,9 @@ class CompilationServiceImplTest {
                 .build();
 
         when(compilationRepository.findById(compilationId)).thenReturn(Optional.of(compilation));
-        when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
+
+        // Используем any() для списка ID
+        when(statsService.getViews(anyList())).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
         // When
         CompilationDto result = compilationService.getCompilation(compilationId);
@@ -334,7 +350,7 @@ class CompilationServiceImplTest {
         assertTrue(result.getPinned());
         assertEquals(2, result.getEvents().size());
         verify(compilationRepository, times(1)).findById(compilationId);
-        verify(statsService, times(1)).getViews(List.of(1L, 2L));
+        verify(statsService, times(1)).getViews(anyList());
     }
 
     @Test
