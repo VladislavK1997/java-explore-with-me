@@ -1,5 +1,6 @@
 package ru.practicum.ewm.service;
 
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -34,9 +35,8 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                                String rangeStart, String rangeEnd, Integer from, Integer size) {
-        // Установите значения по умолчанию
-        if (from == null) from = 0;
-        if (size == null) size = 10;
+        from = (from == null) ? 0 : from;
+        size = (size == null) ? 10 : size;
 
         validatePaginationParams(from, size);
 
@@ -45,15 +45,15 @@ public class EventServiceImpl implements EventService {
 
         List<EventState> eventStates = null;
         if (states != null && !states.isEmpty()) {
-            try {
-                eventStates = new ArrayList<>();
-                for (String state : states) {
-                    if (state != null && !state.trim().isEmpty()) {
+            eventStates = new ArrayList<>();
+            for (String state : states) {
+                if (state != null && !state.trim().isEmpty()) {
+                    try {
                         eventStates.add(EventState.valueOf(state.toUpperCase()));
+                    } catch (IllegalArgumentException e) {
+                        throw new ValidationException("Invalid state value in states parameter");
                     }
                 }
-            } catch (IllegalArgumentException e) {
-                throw new ValidationException("Invalid state value in states parameter");
             }
         }
 
@@ -65,9 +65,9 @@ public class EventServiceImpl implements EventService {
         }
 
         List<Event> events = eventRepository.findEventsByAdmin(
-                users != null && !users.isEmpty() ? users : null,
-                eventStates != null && !eventStates.isEmpty() ? eventStates : null,
-                categories != null && !categories.isEmpty() ? categories : null,
+                (users != null && !users.isEmpty()) ? users : null,
+                (eventStates != null && !eventStates.isEmpty()) ? eventStates : null,
+                (categories != null && !categories.isEmpty()) ? categories : null,
                 start, end, page
         );
 
@@ -75,13 +75,21 @@ public class EventServiceImpl implements EventService {
             return Collections.emptyList();
         }
 
-        Map<Long, Long> views = statsService.getViews(events.stream()
-                .map(Event::getId)
-                .collect(Collectors.toList()));
+        Map<Long, Long> views;
+        try {
+            views = statsService.getViews(events.stream()
+                    .map(Event::getId)
+                    .collect(Collectors.toList()));
+        } catch (Exception e) {
+            log.error("Error getting views: {}", e.getMessage(), e);
+            views = new HashMap<>();
+        }
+
+        final Map<Long, Long> finalViews = views;
 
         return events.stream()
                 .map(event -> {
-                    event.setViews(views.getOrDefault(event.getId(), 0L));
+                    event.setViews(finalViews.getOrDefault(event.getId(), 0L));
                     return EventMapper.toEventFullDto(event);
                 })
                 .collect(Collectors.toList());
@@ -150,9 +158,11 @@ public class EventServiceImpl implements EventService {
                 .map(Event::getId)
                 .collect(Collectors.toList()));
 
+        final Map<Long, Long> finalViews = views;
+
         return events.stream()
                 .map(event -> {
-                    event.setViews(views.getOrDefault(event.getId(), 0L));
+                    event.setViews(finalViews.getOrDefault(event.getId(), 0L));
                     return EventMapper.toEventShortDto(event);
                 })
                 .collect(Collectors.toList());
@@ -234,28 +244,41 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEventsPublic(String text, List<Long> categories, Boolean paid,
                                                String rangeStart, String rangeEnd, Boolean onlyAvailable,
                                                String sort, Integer from, Integer size, String ip) {
-        if (from == null) from = 0;
-        if (size == null) size = 10;
-        if (onlyAvailable == null) onlyAvailable = false;
+        log.info("Getting events public with params: text={}, categories={}, paid={}, rangeStart={}, " +
+                        "rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}",
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+
+        from = (from == null) ? 0 : from;
+        size = (size == null) ? 10 : size;
+        onlyAvailable = (onlyAvailable == null) ? false : onlyAvailable;
 
         validatePaginationParams(from, size);
 
-        if (from < 0) {
-            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
-        }
-        if (size <= 0) {
-            throw new ValidationException("Parameter 'size' must be greater than 0");
-        }
-
         if (sort != null && !sort.isEmpty()) {
             String sortUpper = sort.toUpperCase();
-            if (!sortUpper.equals("EVENT_DATE") && !sortUpper.equals("VIEWS")) {
+            if (!"EVENT_DATE".equals(sortUpper) && !"VIEWS".equals(sortUpper)) {
                 throw new ValidationException("Invalid sort parameter: " + sort);
             }
         }
 
-        LocalDateTime start = parseDateTime(rangeStart);
-        LocalDateTime end = parseDateTime(rangeEnd);
+        LocalDateTime start = null;
+        LocalDateTime end = null;
+
+        if (rangeStart != null && !rangeStart.trim().isEmpty()) {
+            try {
+                start = LocalDateTime.parse(rangeStart.trim(), FORMATTER);
+            } catch (DateTimeParseException e) {
+                throw new ValidationException("Invalid rangeStart format. Expected: yyyy-MM-dd HH:mm:ss");
+            }
+        }
+
+        if (rangeEnd != null && !rangeEnd.trim().isEmpty()) {
+            try {
+                end = LocalDateTime.parse(rangeEnd.trim(), FORMATTER);
+            } catch (DateTimeParseException e) {
+                throw new ValidationException("Invalid rangeEnd format. Expected: yyyy-MM-dd HH:mm:ss");
+            }
+        }
 
         if (start == null) {
             start = LocalDateTime.now();
@@ -267,7 +290,7 @@ public class EventServiceImpl implements EventService {
 
         int pageNumber = from / size;
         PageRequest page;
-        if (sort != null && sort.toUpperCase().equals("EVENT_DATE")) {
+        if (sort != null && "EVENT_DATE".equals(sort.toUpperCase())) {
             page = PageRequest.of(pageNumber, size, Sort.by("eventDate").descending());
         } else {
             page = PageRequest.of(pageNumber, size);
@@ -276,8 +299,8 @@ public class EventServiceImpl implements EventService {
         List<Event> events;
         try {
             events = eventRepository.findEventsPublic(
-                    text != null && !text.isEmpty() ? text : null,
-                    categories != null && !categories.isEmpty() ? categories : null,
+                    (text != null && !text.trim().isEmpty()) ? text.trim() : null,
+                    (categories != null && !categories.isEmpty()) ? categories : null,
                     paid,
                     start,
                     end,
@@ -285,14 +308,15 @@ public class EventServiceImpl implements EventService {
                     page
             );
         } catch (Exception e) {
-            log.error("Error fetching events: {}", e.getMessage());
-            throw new ValidationException("Error fetching events: " + e.getMessage());
+            log.error("Error fetching events: {}", e.getMessage(), e);
+            throw new RuntimeException("Error fetching events", e);
         }
 
         if (Boolean.TRUE.equals(onlyAvailable)) {
             events = events.stream()
                     .filter(event -> event.getParticipantLimit() == 0 ||
-                            (event.getConfirmedRequests() != null && event.getConfirmedRequests() < event.getParticipantLimit()))
+                            (event.getConfirmedRequests() != null &&
+                                    event.getConfirmedRequests() < event.getParticipantLimit()))
                     .collect(Collectors.toList());
         }
 
@@ -300,25 +324,38 @@ public class EventServiceImpl implements EventService {
             return Collections.emptyList();
         }
 
-        Map<Long, Long> views = statsService.getViews(events.stream()
-                .map(Event::getId)
-                .collect(Collectors.toList()));
+        Map<Long, Long> views;
+        try {
+            List<Long> eventIds = events.stream()
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
+            views = statsService.getViews(eventIds);
+        } catch (Exception e) {
+            log.error("Error getting views: {}", e.getMessage(), e);
+            views = new HashMap<>();
+        }
+
+        final Map<Long, Long> finalViews = views;
 
         List<EventShortDto> result = events.stream()
                 .map(event -> {
-                    event.setViews(views.getOrDefault(event.getId(), 0L));
-                    return EventMapper.toEventShortDto(event);
+                    EventShortDto dto = EventMapper.toEventShortDto(event);
+                    if (dto != null) {
+                        dto.setViews(finalViews.getOrDefault(event.getId(), 0L));
+                    }
+                    return dto;
                 })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        if (sort != null && sort.toUpperCase().equals("VIEWS")) {
-            result.sort(Comparator.comparing(EventShortDto::getViews).reversed());
+        if (sort != null && "VIEWS".equals(sort.toUpperCase())) {
+            result.sort(Comparator.comparing(EventShortDto::getViews, Comparator.nullsLast(Long::compareTo)).reversed());
         }
 
         try {
             statsService.saveHit("/events", ip);
         } catch (Exception e) {
-            log.error("Failed to save hit: {}", e.getMessage());
+            log.error("Failed to save hit: {}", e.getMessage(), e);
         }
 
         return result;
@@ -351,7 +388,7 @@ public class EventServiceImpl implements EventService {
         }
 
         try {
-            return LocalDateTime.parse(dateTime, FORMATTER);
+            return LocalDateTime.parse(dateTime.trim(), FORMATTER);
         } catch (DateTimeParseException e) {
             throw new ValidationException("Invalid date format. Expected format: yyyy-MM-dd HH:mm:ss");
         }
