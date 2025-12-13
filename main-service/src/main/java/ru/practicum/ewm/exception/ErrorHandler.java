@@ -240,9 +240,13 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleOtherExceptions(Exception e) {
         log.error("Internal server error: {}", e.getMessage(), e);
+        String message = "Internal server error occurred";
+        if (e.getMessage() != null) {
+            message = e.getMessage();
+        }
         return new ApiError(
                 List.of(e.toString()),
-                "Internal server error: " + e.getMessage(),
+                message,
                 "Internal server error",
                 "INTERNAL_SERVER_ERROR",
                 LocalDateTime.now()
