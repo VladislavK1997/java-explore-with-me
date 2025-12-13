@@ -6,8 +6,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 import ru.practicum.ewm.dto.*;
 import ru.practicum.ewm.exception.*;
@@ -165,13 +165,9 @@ class EventServiceImplTest {
         String text = "test";
         List<Long> categories = List.of(1L, 2L);
         Boolean paid = true;
-        String rangeStart = futureDate.minusDays(1).format(formatter);
-        String rangeEnd = futureDate.plusDays(1).format(formatter);
-        Boolean onlyAvailable = false;
-        String sort = "EVENT_DATE";
+        String ip = "192.168.1.1";
         Integer from = 0;
         Integer size = 10;
-        String ip = "192.168.1.1";
 
         Event event1 = Event.builder()
                 .id(1L)
@@ -203,23 +199,28 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
-        when(eventRepository.findEventsPublic(
-                eq(text), eq(categories), eq(paid), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class)))
-                .thenReturn(List.of(event1, event2));
+        when(eventRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)
+        )).thenReturn(new PageImpl<>(List.of(event1, event2)));
+
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
         doNothing().when(statsService).saveHit("/events", ip);
 
         List<EventShortDto> result = eventService.getEventsPublic(
-                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, ip);
+                text, categories, paid, null, null, false, "EVENT_DATE", from, size, ip);
 
         assertEquals(2, result.size());
         assertEquals("Test Event 1", result.get(0).getTitle());
         assertEquals("Test Event 2", result.get(1).getTitle());
+
         verify(statsService, times(1)).saveHit("/events", ip);
-        verify(eventRepository, times(1)).findEventsPublic(
-                eq(text), eq(categories), eq(paid), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class));
+        verify(eventRepository, times(1))
+                .findAll(any(Specification.class), any(Pageable.class));
         verify(statsService, times(1)).getViews(List.of(1L, 2L));
     }
+
+
 
     @Test
     void getEventsPublic_WithEmptyTextAndCategories_ReturnsEvents() {
@@ -240,9 +241,11 @@ class EventServiceImplTest {
                 .views(100L)
                 .build();
 
-        when(eventRepository.findEventsPublic(
-                isNull(), isNull(), isNull(), any(), isNull(), eq(EventState.PUBLISHED), any(PageRequest.class)))
-                .thenReturn(List.of(event));
+        when(eventRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)
+        )).thenReturn(new PageImpl<>(List.of(event)));
+
         when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 100L));
         doNothing().when(statsService).saveHit("/events", ip);
 
@@ -326,9 +329,11 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
-        when(eventRepository.findEventsPublic(
-                isNull(), isNull(), isNull(), any(), isNull(), eq(EventState.PUBLISHED), any(PageRequest.class)))
-                .thenReturn(List.of(event1, event2));
+        when(eventRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)
+        )).thenReturn(new PageImpl<>(List.of(event1, event2)));
+
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
         doNothing().when(statsService).saveHit("/events", ip);
 
@@ -338,6 +343,7 @@ class EventServiceImplTest {
         assertEquals(1, result.size());
         assertEquals("Available Event", result.get(0).getTitle());
     }
+
 
     @Test
     void getEventsPublic_WithSortViews_ReturnsSortedByViews() {
@@ -373,9 +379,11 @@ class EventServiceImplTest {
                 .views(200L)
                 .build();
 
-        when(eventRepository.findEventsPublic(
-                isNull(), isNull(), isNull(), any(), isNull(), eq(EventState.PUBLISHED), any(PageRequest.class)))
-                .thenReturn(List.of(event1, event2));
+        when(eventRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)
+        )).thenReturn(new PageImpl<>(List.of(event1, event2)));
+
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
         doNothing().when(statsService).saveHit("/events", ip);
 
@@ -775,6 +783,7 @@ class EventServiceImplTest {
         assertTrue(exception.getMessage().contains("Cannot publish the event because the event date is too soon"));
     }
 
+
     @Test
     void getEventsByAdmin_WithNullParams_ReturnsEvents() {
         Event event = Event.builder()
@@ -791,8 +800,10 @@ class EventServiceImplTest {
                 .views(0L)
                 .build();
 
-        doReturn(List.of(event)).when(eventRepository).findEventsByAdmin(
-                isNull(), isNull(), isNull(), isNull(), isNull(), any(PageRequest.class));
+        when(eventRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)
+        )).thenReturn(new PageImpl<>(List.of(event)));
 
         when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 0L));
 
@@ -805,11 +816,20 @@ class EventServiceImplTest {
 
     @Test
     void getEventsByAdmin_WithEmptyLists_ReturnsEmptyList() {
-        doReturn(List.of()).when(eventRepository).findEventsByAdmin(
-                eq(null), any(), eq(null), isNull(), isNull(), any(PageRequest.class));
+        when(eventRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)
+        )).thenReturn(Page.empty());
+
 
         List<EventFullDto> result = eventService.getEventsByAdmin(
-                List.of(), List.of(), List.of(), null, null, 0, 10);
+                List.of(), List.of(), List.of(),
+                null, null,
+                0, 10
+        );
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -858,8 +878,10 @@ class EventServiceImplTest {
                 .views(0L)
                 .build();
 
-        doReturn(List.of(event)).when(eventRepository).findEventsByAdmin(
-                eq(users), any(), eq(categories), isNull(), isNull(), any(PageRequest.class));
+        when(eventRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)
+        )).thenReturn(new PageImpl<>(List.of(event)));
 
         when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 0L));
 

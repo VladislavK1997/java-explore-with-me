@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.dto.*;
@@ -12,6 +13,7 @@ import ru.practicum.ewm.mapper.EventMapper;
 import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.EventRepository;
+import ru.practicum.ewm.repository.EventSpecification;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -75,12 +77,30 @@ public class EventServiceImpl implements EventService {
 
         List<Event> events;
         try {
-            events = eventRepository.findEventsByAdmin(
-                    (users != null && !users.isEmpty()) ? users : null,
-                    (eventStates != null && !eventStates.isEmpty()) ? eventStates : null,
-                    (categories != null && !categories.isEmpty()) ? categories : null,
-                    start, end, page
-            );
+            Specification<Event> spec = Specification.where(null);
+
+            if (users != null && !users.isEmpty()) {
+                spec = spec.and(EventSpecification.initiatorIn(users));
+            }
+
+            if (eventStates != null && !eventStates.isEmpty()) {
+                spec = spec.and(EventSpecification.stateIn(eventStates));
+            }
+
+            if (categories != null && !categories.isEmpty()) {
+                spec = spec.and(EventSpecification.categoryIn(categories));
+            }
+
+            if (start != null) {
+                spec = spec.and(EventSpecification.dateFrom(start));
+            }
+
+            if (end != null) {
+                spec = spec.and(EventSpecification.dateTo(end));
+            }
+
+            events = eventRepository.findAll(spec, page).getContent();
+
         } catch (Exception e) {
             log.error("Error fetching events in getEventsByAdmin: {}", e.getMessage(), e);
             throw new RuntimeException("Error fetching events: " + e.getMessage(), e);
@@ -367,15 +387,30 @@ public class EventServiceImpl implements EventService {
             String finalText = (text != null && !text.trim().isEmpty()) ? text.trim() : null;
             List<Long> finalCategories = (categories != null && !categories.isEmpty()) ? categories : null;
 
-            events = eventRepository.findEventsPublic(
-                    finalText,
-                    finalCategories,
-                    paid,
-                    start,
-                    end,
-                    EventState.PUBLISHED,
-                    page
-            );
+            Specification<Event> spec =
+                    Specification.where(EventSpecification.hasState(EventState.PUBLISHED));
+
+            if (finalText != null) {
+                spec = spec.and(EventSpecification.textSearch(finalText));
+            }
+
+            if (finalCategories != null && !finalCategories.isEmpty()) {
+                spec = spec.and(EventSpecification.categoryIn(finalCategories));
+            }
+
+            if (paid != null) {
+                spec = spec.and(EventSpecification.paid(paid));
+            }
+
+            if (start != null) {
+                spec = spec.and(EventSpecification.dateFrom(start));
+            }
+
+            if (end != null) {
+                spec = spec.and(EventSpecification.dateTo(end));
+            }
+
+            events = eventRepository.findAll(spec, page).getContent();
 
         } catch (Exception e) {
             log.error("Repository error in getEventsPublic: {}", e.getMessage(), e);
