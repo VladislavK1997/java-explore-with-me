@@ -341,30 +341,15 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        LocalDateTime start = null;
-        if (rangeStart != null && !rangeStart.trim().isEmpty()) {
-            try {
-                start = LocalDateTime.parse(rangeStart.trim(), FORMATTER);
-            } catch (DateTimeParseException e) {
-                throw new ValidationException("Invalid rangeStart format. Expected: yyyy-MM-dd HH:mm:ss");
-            }
-        }
+        LocalDateTime start = parseDateTime(rangeStart);
+        LocalDateTime end = parseDateTime(rangeEnd);
 
-        LocalDateTime end = null;
-        if (rangeEnd != null && !rangeEnd.trim().isEmpty()) {
-            try {
-                end = LocalDateTime.parse(rangeEnd.trim(), FORMATTER);
-            } catch (DateTimeParseException e) {
-                throw new ValidationException("Invalid rangeEnd format. Expected: yyyy-MM-dd HH:mm:ss");
-            }
+        if (start != null && end != null && start.isAfter(end)) {
+            throw new ValidationException("rangeStart must be before rangeEnd");
         }
 
         if (start == null) {
             start = LocalDateTime.now();
-        }
-
-        if (end != null && start.isAfter(end)) {
-            throw new ValidationException("rangeStart must be before rangeEnd");
         }
 
         int pageNumber = 0;
@@ -373,10 +358,11 @@ public class EventServiceImpl implements EventService {
         }
 
         PageRequest page;
-        if (finalSort != null && "EVENT_DATE".equals(finalSort)) {
-            page = PageRequest.of(pageNumber, finalSize, Sort.by("eventDate").descending());
-        } else {
+
+        if ("VIEWS".equals(finalSort)) {
             page = PageRequest.of(pageNumber, finalSize);
+        } else {
+            page = PageRequest.of(pageNumber, finalSize, Sort.by("eventDate").descending());
         }
 
         List<Event> events;

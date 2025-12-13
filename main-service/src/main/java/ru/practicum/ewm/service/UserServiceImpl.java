@@ -37,22 +37,26 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
-        final Integer finalFrom = (from == null) ? 0 : from;
-        final Integer finalSize = (size == null) ? 10 : size;
+        if (from == null) {
+            from = 0;
+        }
+        if (size == null) {
+            size = 10;
+        }
 
-        if (finalFrom < 0) {
+        if (from < 0) {
             throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
         }
-        if (finalSize <= 0) {
+        if (size <= 0) {
             throw new ValidationException("Parameter 'size' must be greater than 0");
         }
 
         int pageNumber = 0;
-        if (finalSize > 0) {
-            pageNumber = finalFrom / finalSize;
+        if (size > 0) {
+            pageNumber = from / size;
         }
 
-        PageRequest page = PageRequest.of(pageNumber, finalSize);
+        PageRequest page = PageRequest.of(pageNumber, size);
 
         List<User> users;
         if (ids != null && !ids.isEmpty()) {

@@ -1,6 +1,7 @@
 package ru.practicum.ewm.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -23,6 +24,7 @@ public class UpdateEventUserRequest {
     private String description;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Future(message = "Event date must be in the future")
     private LocalDateTime eventDate;
 
     private LocationDto location;
