@@ -12,7 +12,12 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
-    defer-datasource-initialization: true
+        format_sql: false
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+    defer-datasource-initialization: false
 
   sql:
     init:
@@ -20,6 +25,10 @@ spring:
 
   main:
     allow-bean-definition-overriding: true
+
+stats:
+  server:
+    url: http://localhost:9090
 
 logging:
   level:
