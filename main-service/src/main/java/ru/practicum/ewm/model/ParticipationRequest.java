@@ -2,7 +2,6 @@ package ru.practicum.ewm.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +16,6 @@ public class ParticipationRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @CreationTimestamp
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
 
@@ -31,5 +29,5 @@ public class ParticipationRequest {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RequestStatus status = RequestStatus.PENDING;
+    private RequestStatus status;
 }

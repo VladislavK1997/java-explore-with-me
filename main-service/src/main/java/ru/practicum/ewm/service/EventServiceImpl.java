@@ -111,7 +111,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class, StatsClientException.class})
+    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class})
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateRequest) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
@@ -213,7 +213,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class, StatsClientException.class})
+    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class})
     public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
@@ -254,7 +254,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class, StatsClientException.class})
+    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class})
     public EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
