@@ -38,7 +38,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    @Transactional(noRollbackFor = {ConflictException.class})
+    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class, StatsClientException.class})
     public ParticipationRequestDto createRequest(Long userId, Long eventId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
@@ -119,7 +119,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    @Transactional(noRollbackFor = {ConflictException.class})
+    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class, StatsClientException.class})
     public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId,
                                                               EventRequestStatusUpdateRequest updateRequest) {
         Event event = eventRepository.findById(eventId)

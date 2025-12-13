@@ -3,6 +3,7 @@ package ru.practicum.ewm.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.exception.StatsClientException;
 import ru.practicum.ewm.stat.client.StatsClient;
 import ru.practicum.ewm.stat.dto.EndpointHitDto;
 import ru.practicum.ewm.stat.dto.ViewStatsDto;
@@ -25,7 +26,7 @@ public class StatsService {
             EndpointHitDto hitDto = new EndpointHitDto(null, APP_NAME, uri, ip, LocalDateTime.now());
             statsClient.hit(hitDto);
             log.debug("Statistics saved for URI: {}", uri);
-        } catch (Exception e) {
+        } catch (StatsClientException e) {
             log.error("Failed to save statistics for URI: {}", uri, e);
         }
     }

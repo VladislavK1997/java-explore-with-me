@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
+import ru.practicum.ewm.exception.StatsClientException;
 import ru.practicum.ewm.stat.client.StatsClient;
 import ru.practicum.ewm.stat.dto.EndpointHitDto;
 import ru.practicum.ewm.stat.dto.ViewStatsDto;
@@ -52,7 +53,8 @@ class StatsServiceTest {
         String uri = "/events";
         String ip = "192.168.1.1";
 
-        doThrow(new RuntimeException("Network error")).when(statsClient).hit(any());
+        // Используем StatsClientException вместо RuntimeException
+        doThrow(new StatsClientException("Network error")).when(statsClient).hit(any());
 
         assertDoesNotThrow(() -> statsService.saveHit(uri, ip));
         verify(statsClient, times(1)).hit(any());
@@ -107,7 +109,7 @@ class StatsServiceTest {
         List<Long> eventIds = List.of(1L, 2L);
 
         when(statsClient.getStats(any(), any(), any(), any()))
-                .thenThrow(new RuntimeException("Network error"));
+                .thenThrow(new StatsClientException("Network error"));
 
         Map<Long, Long> views = statsService.getViews(eventIds);
 
