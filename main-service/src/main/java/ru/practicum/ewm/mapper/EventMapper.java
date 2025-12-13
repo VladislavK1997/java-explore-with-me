@@ -42,8 +42,8 @@ public class EventMapper {
 
         EventFullDto dto = new EventFullDto();
         dto.setId(event.getId());
-        dto.setAnnotation(event.getAnnotation());
-        dto.setDescription(event.getDescription());
+        dto.setAnnotation(event.getAnnotation() != null ? event.getAnnotation() : "");
+        dto.setDescription(event.getDescription() != null ? event.getDescription() : "");
         dto.setEventDate(event.getEventDate());
         dto.setCreatedOn(event.getCreatedOn());
         dto.setPublishedOn(event.getPublishedOn());
@@ -51,7 +51,7 @@ public class EventMapper {
         dto.setParticipantLimit(event.getParticipantLimit() != null ? event.getParticipantLimit() : 0);
         dto.setRequestModeration(event.getRequestModeration() != null ? event.getRequestModeration() : true);
         dto.setState(event.getState() != null ? event.getState() : EventState.PENDING);
-        dto.setTitle(event.getTitle());
+        dto.setTitle(event.getTitle() != null ? event.getTitle() : "");
 
         if (event.getCategory() != null) {
             dto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));

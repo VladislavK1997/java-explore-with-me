@@ -8,6 +8,7 @@ import ru.practicum.ewm.dto.NewUserRequest;
 import ru.practicum.ewm.dto.UserDto;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.mapper.UserMapper;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.UserRepository;
@@ -40,10 +41,10 @@ public class UserServiceImpl implements UserService {
         if (size == null) size = 10;
 
         if (from < 0) {
-            throw new ru.practicum.ewm.exception.ValidationException("Parameter 'from' must be greater than or equal to 0");
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
         }
         if (size <= 0) {
-            throw new ru.practicum.ewm.exception.ValidationException("Parameter 'size' must be greater than 0");
+            throw new ValidationException("Parameter 'size' must be greater than 0");
         }
 
         int pageNumber = from / size;

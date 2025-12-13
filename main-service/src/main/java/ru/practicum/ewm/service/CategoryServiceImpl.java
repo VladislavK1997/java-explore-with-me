@@ -8,6 +8,7 @@ import ru.practicum.ewm.dto.CategoryDto;
 import ru.practicum.ewm.dto.NewCategoryDto;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.mapper.CategoryMapper;
 import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.repository.CategoryRepository;
@@ -38,10 +39,10 @@ public class CategoryServiceImpl implements CategoryService {
         if (size == null) size = 10;
 
         if (from < 0) {
-            throw new ru.practicum.ewm.exception.ValidationException("Parameter 'from' must be greater than or equal to 0");
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
         }
         if (size <= 0) {
-            throw new ru.practicum.ewm.exception.ValidationException("Parameter 'size' must be greater than 0");
+            throw new ValidationException("Parameter 'size' must be greater than 0");
         }
 
         int pageNumber = from / size;

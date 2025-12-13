@@ -34,6 +34,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                                String rangeStart, String rangeEnd, Integer from, Integer size) {
+        // Установите значения по умолчанию
         if (from == null) from = 0;
         if (size == null) size = 10;
 
@@ -45,9 +46,12 @@ public class EventServiceImpl implements EventService {
         List<EventState> eventStates = null;
         if (states != null && !states.isEmpty()) {
             try {
-                eventStates = states.stream()
-                        .map(state -> EventState.valueOf(state.toUpperCase()))
-                        .collect(Collectors.toList());
+                eventStates = new ArrayList<>();
+                for (String state : states) {
+                    if (state != null && !state.trim().isEmpty()) {
+                        eventStates.add(EventState.valueOf(state.toUpperCase()));
+                    }
+                }
             } catch (IllegalArgumentException e) {
                 throw new ValidationException("Invalid state value in states parameter");
             }
@@ -60,7 +64,12 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("rangeStart must be before rangeEnd");
         }
 
-        List<Event> events = eventRepository.findEventsByAdmin(users, eventStates, categories, start, end, page);
+        List<Event> events = eventRepository.findEventsByAdmin(
+                users != null && !users.isEmpty() ? users : null,
+                eventStates != null && !eventStates.isEmpty() ? eventStates : null,
+                categories != null && !categories.isEmpty() ? categories : null,
+                start, end, page
+        );
 
         if (events.isEmpty()) {
             return Collections.emptyList();
@@ -231,6 +240,13 @@ public class EventServiceImpl implements EventService {
 
         validatePaginationParams(from, size);
 
+        if (from < 0) {
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+        }
+        if (size <= 0) {
+            throw new ValidationException("Parameter 'size' must be greater than 0");
+        }
+
         if (sort != null && !sort.isEmpty()) {
             String sortUpper = sort.toUpperCase();
             if (!sortUpper.equals("EVENT_DATE") && !sortUpper.equals("VIEWS")) {
@@ -342,6 +358,12 @@ public class EventServiceImpl implements EventService {
     }
 
     private void validatePaginationParams(Integer from, Integer size) {
+        if (from == null) {
+            throw new ValidationException("Parameter 'from' cannot be null");
+        }
+        if (size == null) {
+            throw new ValidationException("Parameter 'size' cannot be null");
+        }
         if (from < 0) {
             throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
         }

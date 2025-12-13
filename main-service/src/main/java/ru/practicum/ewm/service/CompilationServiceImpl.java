@@ -8,6 +8,7 @@ import ru.practicum.ewm.dto.CompilationDto;
 import ru.practicum.ewm.dto.NewCompilationDto;
 import ru.practicum.ewm.dto.UpdateCompilationRequest;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.mapper.CompilationMapper;
 import ru.practicum.ewm.model.Compilation;
 import ru.practicum.ewm.model.Event;
@@ -97,14 +98,18 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
-        if (from == null) {
-            from = 0;
+        if (from == null) from = 0;
+        if (size == null) size = 10;
+
+        if (from < 0) {
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
         }
-        if (size == null) {
-            size = 10;
+        if (size <= 0) {
+            throw new ValidationException("Parameter 'size' must be greater than 0");
         }
 
-        PageRequest page = PageRequest.of(from / size, size);
+        int pageNumber = from / size;
+        PageRequest page = PageRequest.of(pageNumber, size);
 
         List<Compilation> compilations;
         if (pinned != null) {
