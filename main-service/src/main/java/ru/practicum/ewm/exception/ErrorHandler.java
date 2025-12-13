@@ -64,7 +64,6 @@ public class ErrorHandler {
         );
     }
 
-
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleConstraintViolationException(ConstraintViolationException e) {
@@ -238,18 +237,18 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler(UnexpectedRollbackException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleUnexpectedRollbackException(UnexpectedRollbackException e) {
         log.error("Transaction rollback error: {}", e.getMessage());
-        String message = "Transaction failed due to conflicting data or constraints";
+        String message = "Invalid request data";
         if (e.getMessage() != null && e.getMessage().contains("rollback-only")) {
-            message = "Operation cannot be completed due to data conflict";
+            message = "Invalid request data";
         }
         return new ApiError(
                 List.of(e.toString()),
                 message,
-                "For the requested operation the conditions are not met.",
-                "CONFLICT",
+                "Incorrectly made request.",
+                "BAD_REQUEST",
                 LocalDateTime.now()
         );
     }

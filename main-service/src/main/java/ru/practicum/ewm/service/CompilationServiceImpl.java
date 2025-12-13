@@ -96,7 +96,6 @@ public class CompilationServiceImpl implements CompilationService {
             try {
                 statsService.getViews(eventIds);
             } catch (Exception e) {
-
             }
         }
 
@@ -139,7 +138,6 @@ public class CompilationServiceImpl implements CompilationService {
                 try {
                     statsService.getViews(eventIds);
                 } catch (Exception e) {
-
                 }
             }
         });

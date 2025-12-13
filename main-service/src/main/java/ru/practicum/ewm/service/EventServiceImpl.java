@@ -39,10 +39,10 @@ public class EventServiceImpl implements EventService {
         final Integer finalSize = (size == null) ? 10 : size;
 
         if (finalFrom < 0) {
-            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+            throw new ValidationException("Значение from по-умолчанию должно быть равным 0");
         }
         if (finalSize <= 0) {
-            throw new ValidationException("Parameter 'size' must be greater than 0");
+            throw new ValidationException("Значение size по-умолчанию должно быть равным 10");
         }
 
         int pageNumber = 0;
@@ -111,7 +111,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class})
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest updateRequest) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
@@ -213,7 +213,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = {ValidationException.class})
     public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
@@ -254,7 +254,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = {ValidationException.class, ConflictException.class})
     public EventFullDto updateEventByUser(Long userId, Long eventId, UpdateEventUserRequest updateRequest) {
         Event event = eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));

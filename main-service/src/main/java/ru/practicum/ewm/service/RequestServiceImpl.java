@@ -26,6 +26,7 @@ public class RequestServiceImpl implements RequestService {
     private final EventRepository eventRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<ParticipationRequestDto> getRequestsByUser(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("User with id=" + userId + " was not found");
@@ -37,7 +38,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = {ConflictException.class})
     public ParticipationRequestDto createRequest(Long userId, Long eventId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
@@ -103,6 +104,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ParticipationRequestDto> getRequestsForEvent(Long userId, Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
@@ -117,7 +119,7 @@ public class RequestServiceImpl implements RequestService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = {ConflictException.class})
     public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId,
                                                               EventRequestStatusUpdateRequest updateRequest) {
         Event event = eventRepository.findById(eventId)
