@@ -53,8 +53,8 @@ class StatsServiceTest {
         String uri = "/events";
         String ip = "192.168.1.1";
 
-        // Используем StatsClientException вместо RuntimeException
-        doThrow(new StatsClientException("Network error")).when(statsClient).hit(any());
+        // Используем RuntimeException
+        doThrow(new RuntimeException("Network error")).when(statsClient).hit(any());
 
         assertDoesNotThrow(() -> statsService.saveHit(uri, ip));
         verify(statsClient, times(1)).hit(any());
@@ -109,7 +109,7 @@ class StatsServiceTest {
         List<Long> eventIds = List.of(1L, 2L);
 
         when(statsClient.getStats(any(), any(), any(), any()))
-                .thenThrow(new StatsClientException("Network error"));
+                .thenThrow(new RuntimeException("Network error"));
 
         Map<Long, Long> views = statsService.getViews(eventIds);
 

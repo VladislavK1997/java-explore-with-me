@@ -3,7 +3,6 @@ package ru.practicum.ewm.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.ewm.exception.StatsClientException;
 import ru.practicum.ewm.stat.client.StatsClient;
 import ru.practicum.ewm.stat.dto.EndpointHitDto;
 import ru.practicum.ewm.stat.dto.ViewStatsDto;
@@ -26,7 +25,7 @@ public class StatsService {
             EndpointHitDto hitDto = new EndpointHitDto(null, APP_NAME, uri, ip, LocalDateTime.now());
             statsClient.hit(hitDto);
             log.debug("Statistics saved for URI: {}", uri);
-        } catch (StatsClientException e) {
+        } catch (RuntimeException e) {
             log.error("Failed to save statistics for URI: {}", uri, e);
         }
     }
@@ -68,7 +67,7 @@ public class StatsService {
             }
 
             return viewsMap;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Failed to get views statistics: {}", e.getMessage());
             Map<Long, Long> emptyViews = new HashMap<>();
             eventIds.forEach(id -> emptyViews.put(id, 0L));
