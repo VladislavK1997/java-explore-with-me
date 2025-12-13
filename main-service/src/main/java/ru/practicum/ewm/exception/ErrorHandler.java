@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.ewm.dto.ApiError;
 
 import java.time.LocalDateTime;
@@ -236,15 +235,19 @@ public class ErrorHandler {
         );
     }
 
-    @ExceptionHandler(ResponseStatusException.class)
+    @ExceptionHandler(RuntimeException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ApiError handleResponseStatusException(ResponseStatusException e) {
-        log.error("Response status exception: {}", e.getMessage());
+    public ApiError handleRuntimeException(RuntimeException e) {
+        log.error("Runtime error: {}", e.getMessage(), e);
+        String message = "Internal server error occurred";
+        if (e.getMessage() != null) {
+            message = e.getMessage();
+        }
         return new ApiError(
                 List.of(e.toString()),
-                e.getReason(),
-                e.getReason(),
-                e.getStatusCode().toString(),
+                message,
+                "Internal server error",
+                "INTERNAL_SERVER_ERROR",
                 LocalDateTime.now()
         );
     }

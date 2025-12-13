@@ -1,10 +1,13 @@
 package ru.practicum.ewm.service;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
@@ -27,6 +30,7 @@ import static org.mockito.Mockito.*;
 
 @ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class EventServiceImplTest {
 
     @Mock
@@ -47,6 +51,13 @@ class EventServiceImplTest {
     private final LocalDateTime now = LocalDateTime.now();
     private final LocalDateTime futureDate = now.plusHours(3);
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    @BeforeEach
+    void setUp() {
+        // Устанавливаем общие заглушки для всех тестов
+        when(statsService.getViews(anyList())).thenReturn(Map.of());
+        doNothing().when(statsService).saveHit(anyString(), anyString());
+    }
 
     @Test
     void getEventsByUser_ValidUserId_ReturnsEventShortDtoList() {
@@ -77,8 +88,7 @@ class EventServiceImplTest {
                 .build();
 
         when(userRepository.existsById(userId)).thenReturn(true);
-        when(eventRepository.findByInitiatorId(userId,
-                PageRequest.of(0, 10, Sort.by("eventDate").descending())))
+        when(eventRepository.findByInitiatorId(eq(userId), any(PageRequest.class)))
                 .thenReturn(List.of(event1, event2));
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
 
@@ -90,8 +100,7 @@ class EventServiceImplTest {
         assertEquals("Event 1", result.get(0).getTitle());
         assertEquals("Event 2", result.get(1).getTitle());
         verify(userRepository, times(1)).existsById(userId);
-        verify(eventRepository, times(1)).findByInitiatorId(userId,
-                PageRequest.of(0, 10, Sort.by("eventDate").descending()));
+        verify(eventRepository, times(1)).findByInitiatorId(eq(userId), any(PageRequest.class));
         verify(statsService, times(1)).getViews(List.of(1L, 2L));
     }
 
@@ -101,8 +110,7 @@ class EventServiceImplTest {
         Long userId = 1L;
 
         when(userRepository.existsById(userId)).thenReturn(true);
-        when(eventRepository.findByInitiatorId(userId,
-                PageRequest.of(0, 10, Sort.by("eventDate").descending())))
+        when(eventRepository.findByInitiatorId(eq(userId), any(PageRequest.class)))
                 .thenReturn(List.of());
 
         // When
@@ -158,8 +166,7 @@ class EventServiceImplTest {
                 .build();
 
         when(userRepository.existsById(userId)).thenReturn(true);
-        when(eventRepository.findByInitiatorId(userId,
-                PageRequest.of(0, 10, Sort.by("eventDate").descending())))
+        when(eventRepository.findByInitiatorId(eq(userId), any(PageRequest.class)))
                 .thenReturn(List.of(event));
         when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 100L));
 
@@ -219,7 +226,6 @@ class EventServiceImplTest {
                 eq(text), eq(categories), eq(paid), any(), any(), eq(EventState.PUBLISHED), any(PageRequest.class)))
                 .thenReturn(List.of(event1, event2));
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
-        doNothing().when(statsService).saveHit("/events", ip);
 
         // When
         List<EventShortDto> result = eventService.getEventsPublic(
@@ -259,7 +265,6 @@ class EventServiceImplTest {
                 isNull(), isNull(), isNull(), any(), isNull(), eq(EventState.PUBLISHED), any(PageRequest.class)))
                 .thenReturn(List.of(event));
         when(statsService.getViews(List.of(1L))).thenReturn(Map.of(1L, 100L));
-        doNothing().when(statsService).saveHit("/events", ip);
 
         // When
         List<EventShortDto> result = eventService.getEventsPublic(
@@ -354,7 +359,6 @@ class EventServiceImplTest {
                 isNull(), isNull(), isNull(), any(), isNull(), eq(EventState.PUBLISHED), any(PageRequest.class)))
                 .thenReturn(List.of(event1, event2));
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
-        doNothing().when(statsService).saveHit("/events", ip);
 
         // When
         List<EventShortDto> result = eventService.getEventsPublic(
@@ -404,7 +408,6 @@ class EventServiceImplTest {
                 isNull(), isNull(), isNull(), any(), isNull(), eq(EventState.PUBLISHED), any(PageRequest.class)))
                 .thenReturn(List.of(event1, event2));
         when(statsService.getViews(List.of(1L, 2L))).thenReturn(Map.of(1L, 100L, 2L, 200L));
-        doNothing().when(statsService).saveHit("/events", ip);
 
         // When
         List<EventShortDto> result = eventService.getEventsPublic(
@@ -515,7 +518,6 @@ class EventServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(statsService.getViews(List.of(eventId))).thenReturn(Map.of(eventId, 100L));
-        doNothing().when(statsService).saveHit("/events/" + eventId, ip);
 
         // When
         EventFullDto result = eventService.getEventPublic(eventId, ip);

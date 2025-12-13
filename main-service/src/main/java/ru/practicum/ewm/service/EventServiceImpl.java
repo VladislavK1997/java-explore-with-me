@@ -83,7 +83,7 @@ public class EventServiceImpl implements EventService {
             );
         } catch (Exception e) {
             log.error("Error fetching events in getEventsByAdmin: {}", e.getMessage(), e);
-            return Collections.emptyList();
+            throw new RuntimeException("Error fetching events: " + e.getMessage(), e);
         }
 
         if (events.isEmpty()) {
@@ -195,7 +195,7 @@ public class EventServiceImpl implements EventService {
             events = eventRepository.findByInitiatorId(userId, page);
         } catch (Exception e) {
             log.error("Error fetching events in getEventsByUser: {}", e.getMessage(), e);
-            return Collections.emptyList();
+            throw new RuntimeException("Error fetching events: " + e.getMessage(), e);
         }
 
         if (events.isEmpty()) {
@@ -318,149 +318,135 @@ public class EventServiceImpl implements EventService {
     public List<EventShortDto> getEventsPublic(String text, List<Long> categories, Boolean paid,
                                                String rangeStart, String rangeEnd, Boolean onlyAvailable,
                                                String sort, Integer from, Integer size, String ip) {
+        log.info("Getting events public with params: text={}, categories={}, paid={}, rangeStart={}, " +
+                        "rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}, ip={}",
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, ip);
+
+        final int finalFrom = from != null ? from : 0;
+        final int finalSize = size != null ? size : 10;
+        final Boolean finalOnlyAvailable = onlyAvailable != null ? onlyAvailable : false;
+
+        if (finalFrom < 0) {
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+        }
+        if (finalSize <= 0) {
+            throw new ValidationException("Parameter 'size' must be greater than 0");
+        }
+
+        String finalSort = null;
+        if (sort != null && !sort.trim().isEmpty()) {
+            finalSort = sort.trim().toUpperCase();
+            if (!"EVENT_DATE".equals(finalSort) && !"VIEWS".equals(finalSort)) {
+                throw new ValidationException("Invalid sort parameter: " + sort);
+            }
+        }
+
+        LocalDateTime start = null;
+        if (rangeStart != null && !rangeStart.trim().isEmpty()) {
+            try {
+                start = LocalDateTime.parse(rangeStart.trim(), FORMATTER);
+            } catch (DateTimeParseException e) {
+                throw new ValidationException("Invalid rangeStart format. Expected: yyyy-MM-dd HH:mm:ss");
+            }
+        }
+
+        LocalDateTime end = null;
+        if (rangeEnd != null && !rangeEnd.trim().isEmpty()) {
+            try {
+                end = LocalDateTime.parse(rangeEnd.trim(), FORMATTER);
+            } catch (DateTimeParseException e) {
+                throw new ValidationException("Invalid rangeEnd format. Expected: yyyy-MM-dd HH:mm:ss");
+            }
+        }
+
+        if (start == null) {
+            start = LocalDateTime.now();
+        }
+
+        if (end != null && start.isAfter(end)) {
+            throw new ValidationException("rangeStart must be before rangeEnd");
+        }
+
+        int pageNumber = 0;
+        if (finalSize > 0) {
+            pageNumber = finalFrom / finalSize;
+        }
+
+        PageRequest page;
+        if (finalSort != null && "EVENT_DATE".equals(finalSort)) {
+            page = PageRequest.of(pageNumber, finalSize, Sort.by("eventDate").descending());
+        } else {
+            page = PageRequest.of(pageNumber, finalSize);
+        }
+
+        List<Event> events;
         try {
-            log.info("Getting events public with params: text={}, categories={}, paid={}, rangeStart={}, " +
-                            "rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}, ip={}",
-                    text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, ip);
+            String finalText = (text != null && !text.trim().isEmpty()) ? text.trim() : null;
+            List<Long> finalCategories = (categories != null && !categories.isEmpty()) ? categories : null;
 
-            final int finalFrom = from != null ? from : 0;
-            final int finalSize = size != null ? size : 10;
-            final Boolean finalOnlyAvailable = onlyAvailable != null ? onlyAvailable : false;
+            events = eventRepository.findEventsPublic(
+                    finalText,
+                    finalCategories,
+                    paid,
+                    start,
+                    end,
+                    EventState.PUBLISHED,
+                    page
+            );
 
-            if (finalFrom < 0) {
-                throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
-            }
-            if (finalSize <= 0) {
-                throw new ValidationException("Parameter 'size' must be greater than 0");
-            }
-
-            String finalSort = null;
-            if (sort != null && !sort.trim().isEmpty()) {
-                finalSort = sort.trim().toUpperCase();
-                if (!"EVENT_DATE".equals(finalSort) && !"VIEWS".equals(finalSort)) {
-                    throw new ValidationException("Invalid sort parameter: " + sort);
-                }
-            }
-
-            LocalDateTime start = null;
-            if (rangeStart != null && !rangeStart.trim().isEmpty()) {
-                try {
-                    start = LocalDateTime.parse(rangeStart.trim(), FORMATTER);
-                } catch (DateTimeParseException e) {
-                    throw new ValidationException("Invalid rangeStart format. Expected: yyyy-MM-dd HH:mm:ss");
-                }
-            }
-
-            LocalDateTime end = null;
-            if (rangeEnd != null && !rangeEnd.trim().isEmpty()) {
-                try {
-                    end = LocalDateTime.parse(rangeEnd.trim(), FORMATTER);
-                } catch (DateTimeParseException e) {
-                    throw new ValidationException("Invalid rangeEnd format. Expected: yyyy-MM-dd HH:mm:ss");
-                }
-            }
-
-            if (start == null) {
-                start = LocalDateTime.now();
-            }
-
-            if (end != null && start.isAfter(end)) {
-                throw new ValidationException("rangeStart must be before rangeEnd");
-            }
-
-            int pageNumber = 0;
-            if (finalSize > 0) {
-                pageNumber = finalFrom / finalSize;
-            }
-
-            PageRequest page;
-            if (finalSort != null && "EVENT_DATE".equals(finalSort)) {
-                page = PageRequest.of(pageNumber, finalSize, Sort.by("eventDate").descending());
-            } else {
-                page = PageRequest.of(pageNumber, finalSize);
-            }
-
-            List<Event> events = Collections.emptyList();
-            try {
-                String finalText = (text != null && !text.trim().isEmpty()) ? text.trim() : null;
-                List<Long> finalCategories = (categories != null && !categories.isEmpty()) ? categories : null;
-
-                events = eventRepository.findEventsPublic(
-                        finalText,
-                        finalCategories,
-                        paid,
-                        start,
-                        end,
-                        EventState.PUBLISHED,
-                        page
-                );
-
-            } catch (Exception e) {
-                log.error("Repository error in getEventsPublic: {}", e.getMessage(), e);
-                return Collections.emptyList();
-            }
-
-            if (Boolean.TRUE.equals(finalOnlyAvailable)) {
-                events = events.stream()
-                        .filter(event -> event.getParticipantLimit() == 0 ||
-                                (event.getConfirmedRequests() != null &&
-                                        event.getConfirmedRequests() < event.getParticipantLimit()))
-                        .collect(Collectors.toList());
-            }
-
-            if (events.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            Map<Long, Long> views = new HashMap<>();
-            try {
-                List<Long> eventIds = events.stream()
-                        .map(Event::getId)
-                        .collect(Collectors.toList());
-                views = statsService.getViews(eventIds);
-            } catch (Exception e) {
-                log.error("Error getting views in getEventsPublic: {}", e.getMessage(), e);
-            }
-
-            final Map<Long, Long> finalViews = views;
-            List<EventShortDto> result = events.stream()
-                    .map(event -> {
-                        try {
-                            EventShortDto dto = EventMapper.toEventShortDto(event);
-                            if (dto != null) {
-                                dto.setViews(finalViews.getOrDefault(event.getId(), 0L));
-                                dto.setConfirmedRequests(event.getConfirmedRequests() != null ?
-                                        event.getConfirmedRequests().longValue() : 0L);
-                            }
-                            return dto;
-                        } catch (Exception e) {
-                            log.error("Error mapping event {}: {}", event.getId(), e.getMessage());
-                            return null;
-                        }
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-
-            if (finalSort != null && "VIEWS".equals(finalSort)) {
-                result.sort(Comparator.comparing(EventShortDto::getViews,
-                        Comparator.nullsLast(Long::compareTo)).reversed());
-            }
-
-            try {
-                statsService.saveHit("/events", ip);
-            } catch (Exception e) {
-                log.error("Failed to save hit in getEventsPublic: {}", e.getMessage(), e);
-            }
-
-            return result;
-
-        } catch (ValidationException e) {
-            log.warn("Validation error in getEventsPublic: {}", e.getMessage());
-            throw e;
         } catch (Exception e) {
-            log.error("Unexpected error in getEventsPublic: {}", e.getMessage(), e);
+            log.error("Repository error in getEventsPublic: {}", e.getMessage(), e);
+            throw new RuntimeException("Error fetching events: " + e.getMessage(), e);
+        }
+
+        if (Boolean.TRUE.equals(finalOnlyAvailable)) {
+            events = events.stream()
+                    .filter(event -> event.getParticipantLimit() == 0 ||
+                            (event.getConfirmedRequests() != null &&
+                                    event.getConfirmedRequests() < event.getParticipantLimit()))
+                    .collect(Collectors.toList());
+        }
+
+        if (events.isEmpty()) {
             return Collections.emptyList();
         }
+
+        Map<Long, Long> views = new HashMap<>();
+        try {
+            List<Long> eventIds = events.stream()
+                    .map(Event::getId)
+                    .collect(Collectors.toList());
+            views = statsService.getViews(eventIds);
+        } catch (Exception e) {
+            log.error("Error getting views in getEventsPublic: {}", e.getMessage(), e);
+        }
+
+        final Map<Long, Long> finalViews = views;
+        List<EventShortDto> result = events.stream()
+                .map(event -> {
+                    EventShortDto dto = EventMapper.toEventShortDto(event);
+                    if (dto != null) {
+                        dto.setViews(finalViews.getOrDefault(event.getId(), 0L));
+                        dto.setConfirmedRequests(event.getConfirmedRequests() != null ?
+                                event.getConfirmedRequests().longValue() : 0L);
+                    }
+                    return dto;
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        if (finalSort != null && "VIEWS".equals(finalSort)) {
+            result.sort(Comparator.comparing(EventShortDto::getViews,
+                    Comparator.nullsLast(Long::compareTo)).reversed());
+        }
+
+        try {
+            statsService.saveHit("/events", ip);
+        } catch (Exception e) {
+            log.error("Failed to save hit in getEventsPublic: {}", e.getMessage(), e);
+        }
+
+        return result;
     }
 
     @Override
