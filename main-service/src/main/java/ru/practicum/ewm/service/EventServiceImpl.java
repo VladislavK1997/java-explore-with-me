@@ -35,14 +35,14 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public List<EventFullDto> getEventsByAdmin(List<Long> users, List<String> states, List<Long> categories,
                                                String rangeStart, String rangeEnd, Integer from, Integer size) {
-        final Integer finalFrom = (from == null) ? 0 : from;
-        final Integer finalSize = (size == null) ? 10 : size;
+        final int finalFrom = from != null ? from : 0;
+        final int finalSize = size != null ? size : 10;
 
         if (finalFrom < 0) {
-            throw new ValidationException("Значение from по-умолчанию должно быть равным 0");
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
         }
         if (finalSize <= 0) {
-            throw new ValidationException("Значение size по-умолчанию должно быть равным 10");
+            throw new ValidationException("Parameter 'size' must be greater than 0");
         }
 
         int pageNumber = 0;
@@ -104,9 +104,15 @@ public class EventServiceImpl implements EventService {
 
         return events.stream()
                 .map(event -> {
-                    event.setViews(finalViews.getOrDefault(event.getId(), 0L));
-                    return EventMapper.toEventFullDto(event);
+                    EventFullDto dto = EventMapper.toEventFullDto(event);
+                    if (dto != null) {
+                        dto.setViews(finalViews.getOrDefault(event.getId(), 0L));
+                        dto.setConfirmedRequests(event.getConfirmedRequests() != null ?
+                                event.getConfirmedRequests().longValue() : 0L);
+                    }
+                    return dto;
                 })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -163,8 +169,12 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public List<EventShortDto> getEventsByUser(Long userId, Integer from, Integer size) {
-        final Integer finalFrom = (from == null) ? 0 : from;
-        final Integer finalSize = (size == null) ? 10 : size;
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User with id=" + userId + " was not found");
+        }
+
+        final int finalFrom = from != null ? from : 0;
+        final int finalSize = size != null ? size : 10;
 
         if (finalFrom < 0) {
             throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
@@ -206,9 +216,15 @@ public class EventServiceImpl implements EventService {
 
         return events.stream()
                 .map(event -> {
-                    event.setViews(finalViews.getOrDefault(event.getId(), 0L));
-                    return EventMapper.toEventShortDto(event);
+                    EventShortDto dto = EventMapper.toEventShortDto(event);
+                    if (dto != null) {
+                        dto.setViews(finalViews.getOrDefault(event.getId(), 0L));
+                        dto.setConfirmedRequests(event.getConfirmedRequests() != null ?
+                                event.getConfirmedRequests().longValue() : 0L);
+                    }
+                    return dto;
                 })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -307,8 +323,8 @@ public class EventServiceImpl implements EventService {
                             "rangeEnd={}, onlyAvailable={}, sort={}, from={}, size={}, ip={}",
                     text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size, ip);
 
-            final Integer finalFrom = from != null ? from : 0;
-            final Integer finalSize = size != null ? size : 10;
+            final int finalFrom = from != null ? from : 0;
+            final int finalSize = size != null ? size : 10;
             final Boolean finalOnlyAvailable = onlyAvailable != null ? onlyAvailable : false;
 
             if (finalFrom < 0) {
@@ -413,6 +429,8 @@ public class EventServiceImpl implements EventService {
                             EventShortDto dto = EventMapper.toEventShortDto(event);
                             if (dto != null) {
                                 dto.setViews(finalViews.getOrDefault(event.getId(), 0L));
+                                dto.setConfirmedRequests(event.getConfirmedRequests() != null ?
+                                        event.getConfirmedRequests().longValue() : 0L);
                             }
                             return dto;
                         } catch (Exception e) {
@@ -470,7 +488,10 @@ public class EventServiceImpl implements EventService {
             log.error("Failed to save hit in getEventPublic: {}", e.getMessage());
         }
 
-        return EventMapper.toEventFullDto(event);
+        EventFullDto dto = EventMapper.toEventFullDto(event);
+        dto.setConfirmedRequests(event.getConfirmedRequests() != null ?
+                event.getConfirmedRequests().longValue() : 0L);
+        return dto;
     }
 
     private LocalDateTime parseDateTime(String dateTime) {

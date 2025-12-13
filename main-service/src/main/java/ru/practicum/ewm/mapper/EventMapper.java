@@ -55,11 +55,6 @@ public class EventMapper {
 
         if (event.getCategory() != null) {
             dto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
-        } else {
-            CategoryDto categoryDto = new CategoryDto();
-            categoryDto.setId(0L);
-            categoryDto.setName("");
-            dto.setCategory(categoryDto);
         }
 
         if (event.getInitiator() != null) {
@@ -67,22 +62,12 @@ public class EventMapper {
             initiatorDto.setId(event.getInitiator().getId() != null ? event.getInitiator().getId() : 0L);
             initiatorDto.setName(event.getInitiator().getName() != null ? event.getInitiator().getName() : "");
             dto.setInitiator(initiatorDto);
-        } else {
-            UserShortDto initiatorDto = new UserShortDto();
-            initiatorDto.setId(0L);
-            initiatorDto.setName("");
-            dto.setInitiator(initiatorDto);
         }
 
         if (event.getLocation() != null) {
             LocationDto locationDto = new LocationDto();
             locationDto.setLat(event.getLocation().getLat() != null ? event.getLocation().getLat() : 0f);
             locationDto.setLon(event.getLocation().getLon() != null ? event.getLocation().getLon() : 0f);
-            dto.setLocation(locationDto);
-        } else {
-            LocationDto locationDto = new LocationDto();
-            locationDto.setLat(0f);
-            locationDto.setLon(0f);
             dto.setLocation(locationDto);
         }
 
@@ -106,22 +91,12 @@ public class EventMapper {
 
         if (event.getCategory() != null) {
             dto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
-        } else {
-            CategoryDto categoryDto = new CategoryDto();
-            categoryDto.setId(0L);
-            categoryDto.setName("");
-            dto.setCategory(categoryDto);
         }
 
         if (event.getInitiator() != null) {
             UserShortDto initiatorDto = new UserShortDto();
             initiatorDto.setId(event.getInitiator().getId() != null ? event.getInitiator().getId() : 0L);
             initiatorDto.setName(event.getInitiator().getName() != null ? event.getInitiator().getName() : "");
-            dto.setInitiator(initiatorDto);
-        } else {
-            UserShortDto initiatorDto = new UserShortDto();
-            initiatorDto.setId(0L);
-            initiatorDto.setName("");
             dto.setInitiator(initiatorDto);
         }
 

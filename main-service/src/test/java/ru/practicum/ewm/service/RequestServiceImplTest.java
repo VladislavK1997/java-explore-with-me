@@ -117,15 +117,16 @@ class RequestServiceImplTest {
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .id(1L)
+                .created(now)
                 .event(event)
                 .requester(user)
                 .status(RequestStatus.PENDING)
-                .created(now)
                 .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(requestRepository.findByEventIdAndRequesterId(eventId, userId)).thenReturn(Optional.empty());
+        when(requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED)).thenReturn(50L);
         when(requestRepository.save(any(ParticipationRequest.class))).thenReturn(request);
 
         // When
@@ -215,6 +216,7 @@ class RequestServiceImplTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED)).thenReturn(10L);
 
         // When & Then
         ConflictException exception = assertThrows(ConflictException.class,
@@ -285,10 +287,10 @@ class RequestServiceImplTest {
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .id(1L)
+                .created(now)
                 .event(event)
                 .requester(user)
                 .status(RequestStatus.CONFIRMED)
-                .created(now)
                 .build();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -321,10 +323,10 @@ class RequestServiceImplTest {
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .id(requestId)
+                .created(now.minusDays(1))
                 .event(event)
                 .requester(user)
                 .status(RequestStatus.PENDING)
-                .created(now.minusDays(1))
                 .build();
 
         when(requestRepository.findById(requestId)).thenReturn(Optional.of(request));
@@ -367,6 +369,7 @@ class RequestServiceImplTest {
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .id(requestId)
+                .created(now.minusDays(1))
                 .event(event)
                 .requester(otherUser) // Другой пользователь
                 .status(RequestStatus.PENDING)
@@ -397,10 +400,10 @@ class RequestServiceImplTest {
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .id(requestId)
+                .created(now.minusDays(1))
                 .event(event)
                 .requester(user)
                 .status(RequestStatus.CONFIRMED)
-                .created(now.minusDays(1))
                 .build();
 
         when(requestRepository.findById(requestId)).thenReturn(Optional.of(request));
@@ -435,18 +438,18 @@ class RequestServiceImplTest {
 
         ParticipationRequest request1 = ParticipationRequest.builder()
                 .id(1L)
+                .created(now.minusDays(1))
                 .event(event)
                 .requester(requester1)
                 .status(RequestStatus.PENDING)
-                .created(now.minusDays(1))
                 .build();
 
         ParticipationRequest request2 = ParticipationRequest.builder()
                 .id(2L)
+                .created(now)
                 .event(event)
                 .requester(requester2)
                 .status(RequestStatus.CONFIRMED)
-                .created(now)
                 .build();
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
@@ -507,18 +510,18 @@ class RequestServiceImplTest {
 
         ParticipationRequest request1 = ParticipationRequest.builder()
                 .id(1L)
+                .created(now.minusDays(1))
                 .event(event)
                 .requester(requester1)
                 .status(RequestStatus.PENDING)
-                .created(now.minusDays(1))
                 .build();
 
         ParticipationRequest request2 = ParticipationRequest.builder()
                 .id(2L)
+                .created(now)
                 .event(event)
                 .requester(requester2)
                 .status(RequestStatus.PENDING)
-                .created(now)
                 .build();
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
@@ -564,10 +567,10 @@ class RequestServiceImplTest {
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .id(1L)
+                .created(now.minusDays(1))
                 .event(event)
                 .requester(requester)
                 .status(RequestStatus.PENDING)
-                .created(now.minusDays(1))
                 .build();
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
@@ -612,10 +615,10 @@ class RequestServiceImplTest {
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .id(1L)
+                .created(now.minusDays(1))
                 .event(event)
                 .requester(requester)
                 .status(RequestStatus.PENDING)
-                .created(now.minusDays(1))
                 .build();
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
@@ -654,10 +657,10 @@ class RequestServiceImplTest {
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .id(1L)
+                .created(now.minusDays(1))
                 .event(event)
                 .requester(requester)
                 .status(RequestStatus.CONFIRMED) // Уже подтвержден
-                .created(now.minusDays(1))
                 .build();
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
@@ -678,6 +681,7 @@ class RequestServiceImplTest {
 
     @Test
     void updateRequestStatus_NoModerationRequired_ThrowsConflictException() {
+        // Given
         Long userId = 1L;
         Long eventId = 10L;
 
@@ -694,6 +698,7 @@ class RequestServiceImplTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
 
+        // When & Then
         ConflictException exception = assertThrows(ConflictException.class,
                 () -> requestService.updateRequestStatus(userId, eventId, updateRequest));
         assertEquals("Event does not require moderation", exception.getMessage());
