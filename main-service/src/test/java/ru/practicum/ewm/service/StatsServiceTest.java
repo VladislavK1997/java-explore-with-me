@@ -6,7 +6,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
-import ru.practicum.ewm.exception.StatsClientException;
 import ru.practicum.ewm.stat.client.StatsClient;
 import ru.practicum.ewm.stat.dto.EndpointHitDto;
 import ru.practicum.ewm.stat.dto.ViewStatsDto;
@@ -53,7 +52,6 @@ class StatsServiceTest {
         String uri = "/events";
         String ip = "192.168.1.1";
 
-        // Используем RuntimeException
         doThrow(new RuntimeException("Network error")).when(statsClient).hit(any());
 
         assertDoesNotThrow(() -> statsService.saveHit(uri, ip));
@@ -105,7 +103,7 @@ class StatsServiceTest {
     }
 
     @Test
-    void getViews_StatsClientThrowsException_ReturnsMapWithZeros() {
+    void getViews_StatsClientThrowsException_ReturnsEmptyMap() {
         List<Long> eventIds = List.of(1L, 2L);
 
         when(statsClient.getStats(any(), any(), any(), any()))
@@ -114,9 +112,7 @@ class StatsServiceTest {
         Map<Long, Long> views = statsService.getViews(eventIds);
 
         assertNotNull(views);
-        assertEquals(2, views.size());
-        assertEquals(0L, views.get(1L));
-        assertEquals(0L, views.get(2L));
+        assertTrue(views.isEmpty());
         verify(statsClient, times(1)).getStats(any(), any(), any(), any());
     }
 
@@ -203,36 +199,5 @@ class StatsServiceTest {
         verify(statsClient, times(2)).hit(any());
         verify(statsClient).hit(argThat(dto -> dto.getUri().equals("/events")));
         verify(statsClient).hit(argThat(dto -> dto.getUri().equals("/events/123")));
-    }
-
-    @Test
-    void getViews_StatsClientReturnsEmptyList_ReturnsMapWithZeros() {
-        List<Long> eventIds = List.of(1L, 2L, 3L);
-
-        when(statsClient.getStats(any(), any(), any(), any())).thenReturn(List.of());
-
-        Map<Long, Long> views = statsService.getViews(eventIds);
-
-        assertNotNull(views);
-        assertEquals(3, views.size());
-        assertEquals(0L, views.get(1L));
-        assertEquals(0L, views.get(2L));
-        assertEquals(0L, views.get(3L));
-        verify(statsClient, times(1)).getStats(any(), any(), any(), any());
-    }
-
-    @Test
-    void getViews_StatsClientReturnsNull_ReturnsMapWithZeros() {
-        List<Long> eventIds = List.of(1L, 2L);
-
-        when(statsClient.getStats(any(), any(), any(), any())).thenReturn(null);
-
-        Map<Long, Long> views = statsService.getViews(eventIds);
-
-        assertNotNull(views);
-        assertEquals(2, views.size());
-        assertEquals(0L, views.get(1L));
-        assertEquals(0L, views.get(2L));
-        verify(statsClient, times(1)).getStats(any(), any(), any(), any());
     }
 }

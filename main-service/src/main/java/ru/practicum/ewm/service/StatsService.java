@@ -21,11 +21,11 @@ public class StatsService {
     private static final String APP_NAME = "ewm-main-service";
 
     public void saveHit(String uri, String ip) {
+        EndpointHitDto hitDto = new EndpointHitDto(null, APP_NAME, uri, ip, LocalDateTime.now());
         try {
-            EndpointHitDto hitDto = new EndpointHitDto(null, APP_NAME, uri, ip, LocalDateTime.now());
             statsClient.hit(hitDto);
             log.debug("Statistics saved for URI: {}", uri);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             log.error("Failed to save statistics for URI: {}", uri, e);
         }
     }
@@ -67,11 +67,9 @@ public class StatsService {
             }
 
             return viewsMap;
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             log.error("Failed to get views statistics: {}", e.getMessage());
-            Map<Long, Long> emptyViews = new HashMap<>();
-            eventIds.forEach(id -> emptyViews.put(id, 0L));
-            return emptyViews;
+            return new HashMap<>();
         }
     }
 }

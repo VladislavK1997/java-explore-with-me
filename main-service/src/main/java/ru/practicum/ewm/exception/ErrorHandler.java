@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -230,23 +229,6 @@ public class ErrorHandler {
         return new ApiError(
                 List.of(e.toString()),
                 e.getMessage(),
-                "Incorrectly made request.",
-                "BAD_REQUEST",
-                LocalDateTime.now()
-        );
-    }
-
-    @ExceptionHandler(UnexpectedRollbackException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ApiError handleUnexpectedRollbackException(UnexpectedRollbackException e) {
-        log.error("Transaction rollback error: {}", e.getMessage());
-        String message = "Invalid request data";
-        if (e.getMessage() != null && e.getMessage().contains("rollback-only")) {
-            message = "Invalid request data";
-        }
-        return new ApiError(
-                List.of(e.toString()),
-                message,
                 "Incorrectly made request.",
                 "BAD_REQUEST",
                 LocalDateTime.now()
