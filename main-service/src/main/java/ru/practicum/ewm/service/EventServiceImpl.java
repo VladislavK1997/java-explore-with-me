@@ -348,10 +348,6 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("rangeStart must be before rangeEnd");
         }
 
-        if (start == null) {
-            start = LocalDateTime.now();
-        }
-
         int pageNumber = 0;
         if (finalSize > 0) {
             pageNumber = finalFrom / finalSize;
@@ -360,10 +356,11 @@ public class EventServiceImpl implements EventService {
         PageRequest page;
 
         if ("VIEWS".equals(finalSort)) {
-            page = PageRequest.of(pageNumber, finalSize);
+            page = PageRequest.of(pageNumber, finalSize, Sort.by("id").descending());
         } else {
             page = PageRequest.of(pageNumber, finalSize, Sort.by("eventDate").descending());
         }
+
 
         List<Event> events;
         try {
@@ -387,9 +384,11 @@ public class EventServiceImpl implements EventService {
 
         if (Boolean.TRUE.equals(finalOnlyAvailable)) {
             events = events.stream()
-                    .filter(event -> event.getParticipantLimit() == 0 ||
-                            (event.getConfirmedRequests() != null &&
-                                    event.getConfirmedRequests() < event.getParticipantLimit()))
+                    .filter(event ->
+                            event.getParticipantLimit() == 0 ||
+                                    event.getConfirmedRequests() == null ||
+                                    event.getConfirmedRequests() < event.getParticipantLimit()
+                    )
                     .collect(Collectors.toList());
         }
 
@@ -428,8 +427,7 @@ public class EventServiceImpl implements EventService {
 
         try {
             statsService.saveHit("/events", ip);
-        } catch (Exception e) {
-            log.error("Failed to save hit in getEventsPublic: {}", e.getMessage(), e);
+        } catch (Exception ignored) {
         }
 
         return result;

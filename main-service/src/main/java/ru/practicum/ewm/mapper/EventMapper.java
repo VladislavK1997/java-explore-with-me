@@ -91,6 +91,8 @@ public class EventMapper {
 
         if (event.getCategory() != null) {
             dto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
+        } else {
+            dto.setCategory(new CategoryDto(0L, ""));
         }
 
         if (event.getInitiator() != null) {
@@ -98,6 +100,8 @@ public class EventMapper {
             initiatorDto.setId(event.getInitiator().getId() != null ? event.getInitiator().getId() : 0L);
             initiatorDto.setName(event.getInitiator().getName() != null ? event.getInitiator().getName() : "");
             dto.setInitiator(initiatorDto);
+        } else {
+            dto.setInitiator(new UserShortDto(0L, ""));
         }
 
         dto.setConfirmedRequests(event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L);
