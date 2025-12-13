@@ -11,18 +11,27 @@ import java.time.LocalDateTime;
 @UtilityClass
 public class EventMapper {
     public static Event toEvent(NewEventDto newEventDto) {
+        Location location = null;
+        if (newEventDto.getLocation() != null) {
+            location = new Location(
+                    newEventDto.getLocation().getLat(),
+                    newEventDto.getLocation().getLon()
+            );
+        }
+
         return Event.builder()
                 .annotation(newEventDto.getAnnotation())
                 .description(newEventDto.getDescription())
                 .eventDate(newEventDto.getEventDate())
-                .location(new Location(newEventDto.getLocation().getLat(), newEventDto.getLocation().getLon()))
-                .paid(newEventDto.getPaid())
-                .participantLimit(newEventDto.getParticipantLimit())
-                .requestModeration(newEventDto.getRequestModeration())
+                .location(location)
+                .paid(newEventDto.getPaid() != null ? newEventDto.getPaid() : false)
+                .participantLimit(newEventDto.getParticipantLimit() != null ? newEventDto.getParticipantLimit() : 0)
+                .requestModeration(newEventDto.getRequestModeration() != null ? newEventDto.getRequestModeration() : true)
                 .title(newEventDto.getTitle())
                 .state(EventState.PENDING)
                 .createdOn(LocalDateTime.now())
                 .confirmedRequests(0)
+                .views(0L)
                 .build();
     }
 
@@ -30,40 +39,61 @@ public class EventMapper {
         if (event == null) {
             return null;
         }
-        return new EventFullDto(
-                event.getId(),
-                event.getAnnotation(),
-                event.getCategory() != null ? CategoryMapper.toCategoryDto(event.getCategory()) : null,
-                event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L,
-                event.getCreatedOn(),
-                event.getDescription(),
-                event.getEventDate(),
-                event.getInitiator() != null ? new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()) : null,
-                event.getLocation() != null ? new LocationDto(event.getLocation().getLat(), event.getLocation().getLon()) : null,
-                event.getPaid(),
-                event.getParticipantLimit(),
-                event.getPublishedOn(),
-                event.getRequestModeration(),
-                event.getState(),
-                event.getTitle(),
-                event.getViews() != null ? event.getViews() : 0L
-        );
+
+        EventFullDto dto = new EventFullDto();
+        dto.setId(event.getId());
+        dto.setAnnotation(event.getAnnotation());
+        dto.setDescription(event.getDescription());
+        dto.setEventDate(event.getEventDate());
+        dto.setCreatedOn(event.getCreatedOn());
+        dto.setPublishedOn(event.getPublishedOn());
+        dto.setPaid(event.getPaid() != null ? event.getPaid() : false);
+        dto.setParticipantLimit(event.getParticipantLimit() != null ? event.getParticipantLimit() : 0);
+        dto.setRequestModeration(event.getRequestModeration() != null ? event.getRequestModeration() : true);
+        dto.setState(event.getState() != null ? event.getState() : EventState.PENDING);
+        dto.setTitle(event.getTitle());
+
+        if (event.getCategory() != null) {
+            dto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
+        }
+
+        if (event.getInitiator() != null) {
+            dto.setInitiator(new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()));
+        }
+
+        if (event.getLocation() != null) {
+            dto.setLocation(new LocationDto(event.getLocation().getLat(), event.getLocation().getLon()));
+        }
+
+        dto.setConfirmedRequests(event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L);
+        dto.setViews(event.getViews() != null ? event.getViews() : 0L);
+
+        return dto;
     }
 
     public static EventShortDto toEventShortDto(Event event) {
         if (event == null) {
             return null;
         }
-        return new EventShortDto(
-                event.getId(),
-                event.getAnnotation(),
-                event.getCategory() != null ? CategoryMapper.toCategoryDto(event.getCategory()) : null,
-                event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L,
-                event.getEventDate(),
-                event.getInitiator() != null ? new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()) : null,
-                event.getPaid(),
-                event.getTitle(),
-                event.getViews() != null ? event.getViews() : 0L
-        );
+
+        EventShortDto dto = new EventShortDto();
+        dto.setId(event.getId());
+        dto.setAnnotation(event.getAnnotation());
+        dto.setEventDate(event.getEventDate());
+        dto.setPaid(event.getPaid() != null ? event.getPaid() : false);
+        dto.setTitle(event.getTitle());
+
+        if (event.getCategory() != null) {
+            dto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
+        }
+
+        if (event.getInitiator() != null) {
+            dto.setInitiator(new UserShortDto(event.getInitiator().getId(), event.getInitiator().getName()));
+        }
+
+        dto.setConfirmedRequests(event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L);
+        dto.setViews(event.getViews() != null ? event.getViews() : 0L);
+
+        return dto;
     }
 }

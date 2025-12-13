@@ -17,7 +17,12 @@ public class ApplicationConfig {
                 .setFieldMatchingEnabled(true)
                 .setSkipNullEnabled(true)
                 .setFieldAccessLevel(AccessLevel.PRIVATE)
-                .setAmbiguityIgnored(true);
+                .setAmbiguityIgnored(true)
+                .setCollectionsMergeEnabled(false);
+
+        modelMapper.getConfiguration()
+                .setPropertyCondition(context -> context.getSource() != null);
+
         return modelMapper;
     }
 }

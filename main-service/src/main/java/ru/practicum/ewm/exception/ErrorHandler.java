@@ -67,12 +67,18 @@ public class ErrorHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleConstraintViolationException(ConstraintViolationException e) {
-        log.error("Constraint violation: {}", e.getMessage());
+        log.error("Constraint violation error: {}", e.getMessage());
+
         String message = e.getConstraintViolations().stream()
-                .map(violation -> String.format("Field: %s. Error: %s. Value: %s",
-                        violation.getPropertyPath(), violation.getMessage(), violation.getInvalidValue()))
-                .findFirst()
-                .orElse("Constraint violation");
+                .map(violation -> {
+                    String field = violation.getPropertyPath().toString();
+                    String msg = violation.getMessage();
+                    Object value = violation.getInvalidValue();
+                    return String.format("Field: %s. Error: %s. Value: %s",
+                            field, msg, value != null ? value : "null");
+                })
+                .collect(Collectors.joining("; "));
+
         return new ApiError(
                 List.of(e.toString()),
                 message,
@@ -85,12 +91,15 @@ public class ErrorHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        log.error("Validation error: {}", e.getMessage());
+        log.error("Method argument not valid error: {}", e.getMessage());
+
         String message = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> String.format("Field: %s. Error: %s. Value: %s",
-                        error.getField(), error.getDefaultMessage(), error.getRejectedValue()))
-                .findFirst()
-                .orElse("Validation failed");
+                        error.getField(),
+                        error.getDefaultMessage(),
+                        error.getRejectedValue() != null ? error.getRejectedValue() : "null"))
+                .collect(Collectors.joining("; "));
+
         return new ApiError(
                 List.of(e.toString()),
                 message,
@@ -104,11 +113,15 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleBindException(BindException e) {
         log.error("Bind error: {}", e.getMessage());
+
         String message = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> String.format("Field: %s. Error: %s",
-                        error.getField(), error.getDefaultMessage()))
+                .map(error -> String.format("Field: %s. Error: %s. Value: %s",
+                        error.getField(),
+                        error.getDefaultMessage(),
+                        error.getRejectedValue() != null ? error.getRejectedValue() : "null"))
                 .findFirst()
                 .orElse("Bind failed");
+
         return new ApiError(
                 List.of(e.toString()),
                 message,
@@ -226,10 +239,10 @@ public class ErrorHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleOtherExceptions(Exception e) {
-        log.error("Internal server error: {}", e.getMessage());
+        log.error("Internal server error: {}", e.getMessage(), e);
         return new ApiError(
                 List.of(e.toString()),
-                "Internal server error",
+                "Internal server error: " + e.getMessage(),
                 "Internal server error",
                 "INTERNAL_SERVER_ERROR",
                 LocalDateTime.now()

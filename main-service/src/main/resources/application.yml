@@ -28,6 +28,11 @@ spring:
           batch_size: 20
         order_inserts: true
         order_updates: true
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data.sql
+      schema-locations: classpath:schema.sql
 
 server:
   port: 8080
@@ -38,10 +43,21 @@ stats:
 
 logging:
   level:
-    ru.practicum: INFO
+    ru.practicum.ewm: DEBUG
     org.springframework: INFO
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.springframework.web: DEBUG
+    org.springframework.validation: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
 
 ---
 spring:
