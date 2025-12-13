@@ -41,7 +41,7 @@ public class EventMapper {
         }
 
         EventFullDto dto = new EventFullDto();
-        dto.setId(event.getId());
+        dto.setId(event.getId() != null ? event.getId() : 0L);
         dto.setAnnotation(event.getAnnotation() != null ? event.getAnnotation() : "");
         dto.setDescription(event.getDescription() != null ? event.getDescription() : "");
         dto.setEventDate(event.getEventDate());
@@ -56,25 +56,37 @@ public class EventMapper {
         if (event.getCategory() != null) {
             dto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
         } else {
-            dto.setCategory(new CategoryDto());
+            CategoryDto categoryDto = new CategoryDto();
+            categoryDto.setId(0L);
+            categoryDto.setName("");
+            dto.setCategory(categoryDto);
         }
 
         if (event.getInitiator() != null) {
-            dto.setInitiator(new UserShortDto(event.getInitiator().getId(),
-                    event.getInitiator().getName()));
+            UserShortDto initiatorDto = new UserShortDto();
+            initiatorDto.setId(event.getInitiator().getId() != null ? event.getInitiator().getId() : 0L);
+            initiatorDto.setName(event.getInitiator().getName() != null ? event.getInitiator().getName() : "");
+            dto.setInitiator(initiatorDto);
         } else {
-            dto.setInitiator(new UserShortDto());
+            UserShortDto initiatorDto = new UserShortDto();
+            initiatorDto.setId(0L);
+            initiatorDto.setName("");
+            dto.setInitiator(initiatorDto);
         }
 
         if (event.getLocation() != null) {
-            dto.setLocation(new LocationDto(event.getLocation().getLat(),
-                    event.getLocation().getLon()));
+            LocationDto locationDto = new LocationDto();
+            locationDto.setLat(event.getLocation().getLat() != null ? event.getLocation().getLat() : 0f);
+            locationDto.setLon(event.getLocation().getLon() != null ? event.getLocation().getLon() : 0f);
+            dto.setLocation(locationDto);
         } else {
-            dto.setLocation(new LocationDto());
+            LocationDto locationDto = new LocationDto();
+            locationDto.setLat(0f);
+            locationDto.setLon(0f);
+            dto.setLocation(locationDto);
         }
 
-        dto.setConfirmedRequests(event.getConfirmedRequests() != null ?
-                event.getConfirmedRequests().longValue() : 0L);
+        dto.setConfirmedRequests(event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L);
         dto.setViews(event.getViews() != null ? event.getViews() : 0L);
 
         return dto;
@@ -86,7 +98,7 @@ public class EventMapper {
         }
 
         EventShortDto dto = new EventShortDto();
-        dto.setId(event.getId());
+        dto.setId(event.getId() != null ? event.getId() : 0L);
         dto.setAnnotation(event.getAnnotation() != null ? event.getAnnotation() : "");
         dto.setEventDate(event.getEventDate());
         dto.setPaid(event.getPaid() != null ? event.getPaid() : false);
@@ -95,18 +107,25 @@ public class EventMapper {
         if (event.getCategory() != null) {
             dto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
         } else {
-            dto.setCategory(new CategoryDto());
+            CategoryDto categoryDto = new CategoryDto();
+            categoryDto.setId(0L);
+            categoryDto.setName("");
+            dto.setCategory(categoryDto);
         }
 
         if (event.getInitiator() != null) {
-            dto.setInitiator(new UserShortDto(event.getInitiator().getId(),
-                    event.getInitiator().getName()));
+            UserShortDto initiatorDto = new UserShortDto();
+            initiatorDto.setId(event.getInitiator().getId() != null ? event.getInitiator().getId() : 0L);
+            initiatorDto.setName(event.getInitiator().getName() != null ? event.getInitiator().getName() : "");
+            dto.setInitiator(initiatorDto);
         } else {
-            dto.setInitiator(new UserShortDto());
+            UserShortDto initiatorDto = new UserShortDto();
+            initiatorDto.setId(0L);
+            initiatorDto.setName("");
+            dto.setInitiator(initiatorDto);
         }
 
-        dto.setConfirmedRequests(event.getConfirmedRequests() != null ?
-                event.getConfirmedRequests().longValue() : 0L);
+        dto.setConfirmedRequests(event.getConfirmedRequests() != null ? event.getConfirmedRequests().longValue() : 0L);
         dto.setViews(event.getViews() != null ? event.getViews() : 0L);
 
         return dto;

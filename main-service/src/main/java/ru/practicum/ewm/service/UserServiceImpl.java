@@ -47,7 +47,11 @@ public class UserServiceImpl implements UserService {
             throw new ValidationException("Parameter 'size' must be greater than 0");
         }
 
-        int pageNumber = finalFrom / finalSize;
+        int pageNumber = 0;
+        if (finalSize > 0) {
+            pageNumber = finalFrom / finalSize;
+        }
+
         PageRequest page = PageRequest.of(pageNumber, finalSize);
 
         List<User> users;
