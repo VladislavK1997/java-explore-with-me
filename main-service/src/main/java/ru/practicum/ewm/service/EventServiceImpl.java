@@ -231,7 +231,6 @@ public class EventServiceImpl implements EventService {
 
         validatePaginationParams(from, size);
 
-        // Валидация параметра sort
         if (sort != null && !sort.isEmpty()) {
             String sortUpper = sort.toUpperCase();
             if (!sortUpper.equals("EVENT_DATE") && !sortUpper.equals("VIEWS")) {

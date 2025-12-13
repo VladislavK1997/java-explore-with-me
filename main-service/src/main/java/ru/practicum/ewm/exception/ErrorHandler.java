@@ -63,13 +63,16 @@ public class ErrorHandler {
         );
     }
 
+
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleConstraintViolationException(ConstraintViolationException e) {
         log.error("Constraint violation: {}", e.getMessage());
         String message = e.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage)
-                .collect(Collectors.joining(", "));
+                .map(violation -> String.format("Field: %s. Error: %s. Value: %s",
+                        violation.getPropertyPath(), violation.getMessage(), violation.getInvalidValue()))
+                .findFirst()
+                .orElse("Constraint violation");
         return new ApiError(
                 List.of(e.toString()),
                 message,
@@ -84,8 +87,8 @@ public class ErrorHandler {
     public ApiError handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         log.error("Validation error: {}", e.getMessage());
         String message = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> String.format("Field: %s. Error: %s",
-                        error.getField(), error.getDefaultMessage()))
+                .map(error -> String.format("Field: %s. Error: %s. Value: %s",
+                        error.getField(), error.getDefaultMessage(), error.getRejectedValue()))
                 .findFirst()
                 .orElse("Validation failed");
         return new ApiError(
