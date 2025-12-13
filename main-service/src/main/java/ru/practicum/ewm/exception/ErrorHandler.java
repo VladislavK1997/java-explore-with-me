@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -232,6 +233,23 @@ public class ErrorHandler {
                 e.getMessage(),
                 "Incorrectly made request.",
                 "BAD_REQUEST",
+                LocalDateTime.now()
+        );
+    }
+
+    @ExceptionHandler(UnexpectedRollbackException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError handleUnexpectedRollbackException(UnexpectedRollbackException e) {
+        log.error("Transaction rollback error: {}", e.getMessage());
+        String message = "Transaction failed due to conflicting data or constraints";
+        if (e.getMessage() != null && e.getMessage().contains("rollback-only")) {
+            message = "Operation cannot be completed due to data conflict";
+        }
+        return new ApiError(
+                List.of(e.toString()),
+                message,
+                "For the requested operation the conditions are not met.",
+                "CONFLICT",
                 LocalDateTime.now()
         );
     }

@@ -49,7 +49,10 @@ public class CompilationServiceImpl implements CompilationService {
                     .map(Event::getId)
                     .collect(Collectors.toList());
 
-            statsService.getViews(eventIds);
+            try {
+                statsService.getViews(eventIds);
+            } catch (Exception e) {
+            }
         }
 
         return CompilationMapper.toCompilationDto(savedCompilation);
@@ -90,13 +93,18 @@ public class CompilationServiceImpl implements CompilationService {
                     .map(Event::getId)
                     .collect(Collectors.toList());
 
-            statsService.getViews(eventIds);
+            try {
+                statsService.getViews(eventIds);
+            } catch (Exception e) {
+
+            }
         }
 
         return CompilationMapper.toCompilationDto(updatedCompilation);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
         final Integer finalFrom = (from == null) ? 0 : from;
         final Integer finalSize = (size == null) ? 10 : size;
@@ -128,7 +136,11 @@ public class CompilationServiceImpl implements CompilationService {
                         .map(Event::getId)
                         .collect(Collectors.toList());
 
-                statsService.getViews(eventIds);
+                try {
+                    statsService.getViews(eventIds);
+                } catch (Exception e) {
+
+                }
             }
         });
 
@@ -138,6 +150,7 @@ public class CompilationServiceImpl implements CompilationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CompilationDto getCompilation(Long compId) {
         Compilation compilation = compilationRepository.findById(compId)
                 .orElseThrow(() -> new NotFoundException("Compilation with id=" + compId + " was not found"));
@@ -147,7 +160,10 @@ public class CompilationServiceImpl implements CompilationService {
                     .map(Event::getId)
                     .collect(Collectors.toList());
 
-            statsService.getViews(eventIds);
+            try {
+                statsService.getViews(eventIds);
+            } catch (Exception e) {
+            }
         }
 
         return CompilationMapper.toCompilationDto(compilation);

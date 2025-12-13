@@ -103,7 +103,7 @@ class StatsServiceTest {
     }
 
     @Test
-    void getViews_StatsClientThrowsException_ReturnsEmptyMap() {
+    void getViews_StatsClientThrowsException_ReturnsMapWithZeros() {
         List<Long> eventIds = List.of(1L, 2L);
 
         when(statsClient.getStats(any(), any(), any(), any()))
@@ -112,7 +112,9 @@ class StatsServiceTest {
         Map<Long, Long> views = statsService.getViews(eventIds);
 
         assertNotNull(views);
-        assertTrue(views.isEmpty());
+        assertEquals(2, views.size());
+        assertEquals(0L, views.get(1L));
+        assertEquals(0L, views.get(2L));
         verify(statsClient, times(1)).getStats(any(), any(), any(), any());
     }
 
@@ -199,5 +201,36 @@ class StatsServiceTest {
         verify(statsClient, times(2)).hit(any());
         verify(statsClient).hit(argThat(dto -> dto.getUri().equals("/events")));
         verify(statsClient).hit(argThat(dto -> dto.getUri().equals("/events/123")));
+    }
+
+    @Test
+    void getViews_StatsClientReturnsEmptyList_ReturnsMapWithZeros() {
+        List<Long> eventIds = List.of(1L, 2L, 3L);
+
+        when(statsClient.getStats(any(), any(), any(), any())).thenReturn(List.of());
+
+        Map<Long, Long> views = statsService.getViews(eventIds);
+
+        assertNotNull(views);
+        assertEquals(3, views.size());
+        assertEquals(0L, views.get(1L));
+        assertEquals(0L, views.get(2L));
+        assertEquals(0L, views.get(3L));
+        verify(statsClient, times(1)).getStats(any(), any(), any(), any());
+    }
+
+    @Test
+    void getViews_StatsClientReturnsNull_ReturnsMapWithZeros() {
+        List<Long> eventIds = List.of(1L, 2L);
+
+        when(statsClient.getStats(any(), any(), any(), any())).thenReturn(null);
+
+        Map<Long, Long> views = statsService.getViews(eventIds);
+
+        assertNotNull(views);
+        assertEquals(2, views.size());
+        assertEquals(0L, views.get(1L));
+        assertEquals(0L, views.get(2L));
+        verify(statsClient, times(1)).getStats(any(), any(), any(), any());
     }
 }
