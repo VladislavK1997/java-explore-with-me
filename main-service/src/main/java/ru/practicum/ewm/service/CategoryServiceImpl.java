@@ -34,7 +34,6 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<CategoryDto> getCategories(Integer from, Integer size) {
         if (from == null) {
             from = 0;
@@ -68,11 +67,11 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public CategoryDto getCategory(Long catId) {
-        Category category = categoryRepository.findById(catId)
-                .orElseThrow(() -> new NotFoundException("Category with id=" + catId + " was not found"));
-        return CategoryMapper.toCategoryDto(category);
+        return categoryRepository.findById(catId)
+                .map(CategoryMapper::toCategoryDto)
+                .orElseThrow(() -> new NotFoundException(
+                        "Category with id=" + catId + " was not found"));
     }
 
     @Override

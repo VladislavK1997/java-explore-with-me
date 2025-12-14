@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.practicum.ewm.model.EventRequestStatusAction;
 
 import java.util.List;
 
@@ -17,6 +18,5 @@ public class EventRequestStatusUpdateRequest {
     private List<Long> requestIds;
 
     @NotNull
-    @Pattern(regexp = "CONFIRMED|REJECTED", message = "Status must be CONFIRMED or REJECTED")
-    private String status;
+    private EventRequestStatusAction status;
 }

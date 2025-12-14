@@ -16,6 +16,7 @@ import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
+import ru.practicum.ewm.model.EventRequestStatusAction;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -526,7 +527,7 @@ class RequestServiceImplTest {
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
         updateRequest.setRequestIds(List.of(1L, 2L));
-        updateRequest.setStatus("CONFIRMED");
+        updateRequest.setStatus(EventRequestStatusAction.CONFIRMED);
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(requestRepository.findAllById(List.of(1L, 2L))).thenReturn(List.of(request1, request2));
@@ -575,7 +576,7 @@ class RequestServiceImplTest {
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
         updateRequest.setRequestIds(List.of(1L));
-        updateRequest.setStatus("REJECTED");
+        updateRequest.setStatus(EventRequestStatusAction.REJECTED);
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(requestRepository.findAllById(List.of(1L))).thenReturn(List.of(request));
@@ -623,7 +624,7 @@ class RequestServiceImplTest {
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
         updateRequest.setRequestIds(List.of(1L));
-        updateRequest.setStatus("CONFIRMED");
+        updateRequest.setStatus(EventRequestStatusAction.CONFIRMED);
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(requestRepository.findAllById(List.of(1L))).thenReturn(List.of(request));
@@ -665,7 +666,7 @@ class RequestServiceImplTest {
 
         EventRequestStatusUpdateRequest updateRequest = new EventRequestStatusUpdateRequest();
         updateRequest.setRequestIds(List.of(1L));
-        updateRequest.setStatus("REJECTED");
+        updateRequest.setStatus(EventRequestStatusAction.REJECTED);
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
         when(requestRepository.findAllById(List.of(1L))).thenReturn(List.of(request));

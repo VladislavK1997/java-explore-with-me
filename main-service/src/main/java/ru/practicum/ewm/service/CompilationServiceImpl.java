@@ -141,10 +141,7 @@ public class CompilationServiceImpl implements CompilationService {
                         .map(Event::getId)
                         .collect(Collectors.toList());
 
-                try {
-                    statsService.getViews(eventIds);
-                } catch (Exception e) {
-                }
+                statsService.getViews(eventIds);
             }
         });
 

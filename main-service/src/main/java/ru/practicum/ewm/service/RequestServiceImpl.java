@@ -12,6 +12,7 @@ import ru.practicum.ewm.model.*;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.repository.UserRepository;
+import ru.practicum.ewm.model.EventRequestStatusAction;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -33,11 +34,8 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException("User with id=" + userId + " was not found");
         }
 
-        List<ParticipationRequest> requests = requestRepository.findByRequesterId(userId);
-
-        if (requests.isEmpty()) {
-            return List.of();
-        }
+        List<ParticipationRequest> requests =
+                requestRepository.findByRequesterId(userId);
 
         return requests.stream()
                 .map(ParticipationRequestMapper::toParticipationRequestDto)
@@ -130,11 +128,8 @@ public class RequestServiceImpl implements RequestService {
             throw new NotFoundException("Event with id=" + eventId + " was not found");
         }
 
-        List<ParticipationRequest> requests = requestRepository.findByEventId(eventId);
-
-        if (requests.isEmpty()) {
-            return List.of();
-        }
+        List<ParticipationRequest> requests =
+                requestRepository.findByEventId(eventId);
 
         return requests.stream()
                 .map(ParticipationRequestMapper::toParticipationRequestDto)
@@ -154,14 +149,6 @@ public class RequestServiceImpl implements RequestService {
 
         if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
             throw new ConflictException("Event does not require moderation");
-        }
-
-        if (updateRequest.getStatus() == null) {
-            throw new ConflictException("Invalid status value: null");
-        }
-
-        if (!updateRequest.getStatus().equals("CONFIRMED") && !updateRequest.getStatus().equals("REJECTED")) {
-            throw new ConflictException("Invalid status value: " + updateRequest.getStatus());
         }
 
         if (updateRequest.getRequestIds() == null || updateRequest.getRequestIds().isEmpty()) {
@@ -188,7 +175,7 @@ public class RequestServiceImpl implements RequestService {
 
         int availableSlots = event.getParticipantLimit() - event.getConfirmedRequests();
 
-        if ("CONFIRMED".equals(updateRequest.getStatus())) {
+        if (updateRequest.getStatus() == EventRequestStatusAction.CONFIRMED) {
             if (availableSlots <= 0) {
                 throw new ConflictException("The participant limit has been reached");
             }
@@ -208,7 +195,7 @@ public class RequestServiceImpl implements RequestService {
                 event.setConfirmedRequests(event.getConfirmedRequests() + confirmedRequests.size());
                 eventRepository.save(event);
             }
-        } else if ("REJECTED".equals(updateRequest.getStatus())) {
+        } else {
             for (ParticipationRequest request : requests) {
                 request.setStatus(RequestStatus.REJECTED);
                 rejectedRequests.add(request);
