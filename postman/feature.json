@@ -11,19 +11,12 @@
       "request": {
         "method": "POST",
         "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
+          { "key": "Content-Type", "value": "application/json" }
         ],
         "body": {
           "mode": "raw",
           "raw": "{\"text\":\"Great event!\"}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
+          "options": { "raw": { "language": "json" } }
         },
         "url": "http://localhost:8080/users/1/events/1/comments"
       },
@@ -32,7 +25,10 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.response.to.have.status(201);"
+              "pm.response.to.have.status(201);",
+              "// Сохраняем id созданного комментария в переменную",
+              "var responseJson = pm.response.json();",
+              "pm.environment.set('commentId', responseJson.id);"
             ]
           }
         }
@@ -49,7 +45,10 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.response.to.have.status(200);"
+              "pm.response.to.have.status(200);",
+              "// Проверяем, что комментарий присутствует в списке",
+              "var responseJson = pm.response.json();",
+              "pm.expect(responseJson.length).to.be.above(0);"
             ]
           }
         }
@@ -59,7 +58,7 @@
       "name": "Delete comment",
       "request": {
         "method": "DELETE",
-        "url": "http://localhost:8080/users/1/comments/1"
+        "url": "http://localhost:8080/users/1/comments/{{commentId}}"
       },
       "event": [
         {
@@ -74,3 +73,4 @@
     }
   ]
 }
+
