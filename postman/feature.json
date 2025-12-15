@@ -1,84 +1,148 @@
 {
+  "openapi": "3.0.1",
   "info": {
-    "name": "Feature Comments",
-    "_postman_id": "feature-comments-002",
-    "description": "Тесты для функциональности комментариев с динамическим commentId",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "title": "Comments service API",
+    "version": "v0"
   },
-  "item": [
+  "servers": [
     {
-      "name": "Create comment",
-      "request": {
-        "method": "POST",
-        "header": [
+      "url": "http://localhost:8080",
+      "description": "Local server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "CommentsController",
+      "description": "API для работы с комментариями к событиям"
+    }
+  ],
+  "paths": {
+    "/users/{userId}/events/{eventId}/comments": {
+      "post": {
+        "tags": ["CommentsController"],
+        "summary": "Создать комментарий для события",
+        "description": "Добавление нового комментария к опубликованному событию от конкретного пользователя",
+        "operationId": "createComment",
+        "parameters": [
           {
-            "key": "Content-Type",
-            "value": "application/json"
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID пользователя, создающего комментарий",
+            "schema": { "type": "integer", "format": "int64" }
+          },
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "ID события, к которому создаётся комментарий",
+            "schema": { "type": "integer", "format": "int64" }
           }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\"text\":\"Great event!\"}",
-          "options": {
-            "raw": {
-              "language": "json"
+        "requestBody": {
+          "description": "Текст комментария",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CommentRequest" }
             }
           }
         },
-        "url": "http://localhost:8080/users/1/events/1/comments"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.response.to.have.status(201);",
-              "// Сохраняем id созданного комментария в переменную среды",
-              "let jsonData = pm.response.json();",
-              "pm.environment.set('commentId', jsonData.id);"
-            ]
+        "responses": {
+          "201": {
+            "description": "Комментарий успешно создан",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CommentResponse" }
+              }
+            }
           }
         }
-      ]
+      }
     },
-    {
-      "name": "Get comments",
-      "request": {
-        "method": "GET",
-        "url": "http://localhost:8080/events/1/comments"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.response.to.have.status(200);",
-              "// Проверяем, что массив комментариев не пустой",
-              "let jsonData = pm.response.json();",
-              "pm.expect(jsonData.length).to.be.above(0);"
-            ]
+    "/events/{eventId}/comments": {
+      "get": {
+        "tags": ["CommentsController"],
+        "summary": "Получить комментарии события",
+        "description": "Возвращает список всех комментариев для указанного события",
+        "operationId": "getComments",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "description": "ID события",
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Список комментариев",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/CommentResponse" }
+                }
+              }
+            }
           }
         }
-      ]
+      }
     },
-    {
-      "name": "Delete comment",
-      "request": {
-        "method": "DELETE",
-        "url": "http://localhost:8080/users/1/comments/{{commentId}}"
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.response.to.have.status(204);",
-              "// Очищаем переменную commentId после удаления",
-              "pm.environment.unset('commentId');"
-            ]
+    "/users/{userId}/comments/{commentId}": {
+      "delete": {
+        "tags": ["CommentsController"],
+        "summary": "Удалить комментарий",
+        "description": "Удаляет комментарий пользователя по ID",
+        "operationId": "deleteComment",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID пользователя, который удаляет комментарий",
+            "schema": { "type": "integer", "format": "int64" }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "description": "ID комментария для удаления",
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Комментарий успешно удалён"
           }
         }
-      ]
+      }
     }
-  ]
+  },
+  "components": {
+    "schemas": {
+      "CommentRequest": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "Текст комментария",
+            "example": "Great event!"
+          }
+        },
+        "required": ["text"]
+      },
+      "CommentResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "example": 1 },
+          "userId": { "type": "integer", "format": "int64", "example": 100 },
+          "eventId": { "type": "integer", "format": "int64", "example": 200 },
+          "text": { "type": "string", "example": "Great event!" },
+          "createdAt": { "type": "string", "format": "date-time", "example": "2025-12-15T13:00:00" }
+        }
+      }
+    }
+  }
 }
