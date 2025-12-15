@@ -2,19 +2,35 @@
   "info": {
     "name": "Feature Comments",
     "_postman_id": "feature-comments-004",
-    "description": "Тесты комментариев к событиям",
+    "description": "Тесты комментариев с опубликованным событием (готово к запуску в Newman)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "userId",
+      "value": "1"
+    },
+    {
+      "key": "eventId",
+      "value": "1"
+    },
+    {
+      "key": "commentId",
+      "value": ""
+    }
+  ],
   "item": [
     {
       "name": "Create comment",
       "request": {
         "method": "POST",
-        "header": [{"key": "Content-Type","value": "application/json"}],
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\"text\":\"Great event!\"}",
-          "options":{"raw":{"language":"json"}}
+          "raw": "{ \"text\": \"Great event!\" }",
+          "options": { "raw": { "language": "json" } }
         },
         "url": "http://localhost:8080/users/{{userId}}/events/{{eventId}}/comments"
       },
