@@ -1,0 +1,43 @@
+{
+  "info": {"name": "Feature Comments"},
+  "item": [
+    {
+      "name": "Create comment",
+      "request": {
+        "method": "POST",
+        "url": "{{host}}/users/1/events/1/comments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\"text\":\"Great event!\"}",
+          "options": {"raw": {"language": "json"}}
+        }
+      },
+      "event": [{
+        "listen": "test",
+        "script": {"exec": ["pm.response.to.have.status(201);"]}
+      }]
+    },
+    {
+      "name": "Get comments",
+      "request": {
+        "method": "GET",
+        "url": "{{host}}/events/1/comments"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {"exec": ["pm.response.to.have.status(200);"]}
+      }]
+    },
+    {
+      "name": "Delete comment",
+      "request": {
+        "method": "DELETE",
+        "url": "{{host}}/users/1/comments/1"
+      },
+      "event": [{
+        "listen": "test",
+        "script": {"exec": ["pm.response.to.have.status(204);"]}
+      }]
+    }
+  ]
+}
