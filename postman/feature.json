@@ -1,8 +1,8 @@
 {
   "info": {
     "name": "Feature Comments",
-    "_postman_id": "feature-comments-001",
-    "description": "Тесты для функциональности комментариев",
+    "_postman_id": "feature-comments-002",
+    "description": "Тесты для функциональности комментариев с динамическим commentId",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -11,12 +11,19 @@
       "request": {
         "method": "POST",
         "header": [
-          { "key": "Content-Type", "value": "application/json" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
         "body": {
           "mode": "raw",
           "raw": "{\"text\":\"Great event!\"}",
-          "options": { "raw": { "language": "json" } }
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
         },
         "url": "http://localhost:8080/users/1/events/1/comments"
       },
@@ -26,9 +33,9 @@
           "script": {
             "exec": [
               "pm.response.to.have.status(201);",
-              "// Сохраняем id созданного комментария в переменную",
-              "var responseJson = pm.response.json();",
-              "pm.environment.set('commentId', responseJson.id);"
+              "// Сохраняем id созданного комментария в переменную среды",
+              "let jsonData = pm.response.json();",
+              "pm.environment.set('commentId', jsonData.id);"
             ]
           }
         }
@@ -46,9 +53,9 @@
           "script": {
             "exec": [
               "pm.response.to.have.status(200);",
-              "// Проверяем, что комментарий присутствует в списке",
-              "var responseJson = pm.response.json();",
-              "pm.expect(responseJson.length).to.be.above(0);"
+              "// Проверяем, что массив комментариев не пустой",
+              "let jsonData = pm.response.json();",
+              "pm.expect(jsonData.length).to.be.above(0);"
             ]
           }
         }
@@ -65,7 +72,9 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.response.to.have.status(204);"
+              "pm.response.to.have.status(204);",
+              "// Очищаем переменную commentId после удаления",
+              "pm.environment.unset('commentId');"
             ]
           }
         }
@@ -73,4 +82,3 @@
     }
   ]
 }
-
