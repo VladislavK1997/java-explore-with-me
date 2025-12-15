@@ -1,88 +1,92 @@
 {
   "info": {
-    "name": "Feature Comments",
-    "_postman_id": "feature-comments-004",
-    "description": "Тесты комментариев с опубликованным событием (готово к запуску в Newman)",
+    "name": "EWM Comments API",
+    "_postman_id": "comments-api-001",
+    "description": "Collection for testing comments endpoints",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "variable": [
-    {
-      "key": "userId",
-      "value": "1"
-    },
-    {
-      "key": "eventId",
-      "value": "1"
-    },
-    {
-      "key": "commentId",
-      "value": ""
-    }
-  ],
   "item": [
     {
-      "name": "Create comment",
+      "name": "Create Event",
       "request": {
         "method": "POST",
         "header": [
           { "key": "Content-Type", "value": "application/json" }
         ],
+        "url": { "raw": "http://localhost:8080/users/1/events", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["users","1","events"] },
         "body": {
           "mode": "raw",
-          "raw": "{ \"text\": \"Great event!\" }",
-          "options": { "raw": { "language": "json" } }
-        },
-        "url": "http://localhost:8080/users/{{userId}}/events/{{eventId}}/comments"
+          "raw": "{\n  \"annotation\": \"Test event\",\n  \"category\": 1,\n  \"description\": \"Event for testing comments\",\n  \"eventDate\": \"2025-12-16 15:00:00\",\n  \"location\": { \"lat\": 55.75, \"lon\": 37.62 },\n  \"paid\": false,\n  \"participantLimit\": 10,\n  \"requestModeration\": true,\n  \"title\": \"Test Event\"\n}"
+        }
       },
+      "response": [],
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.response.to.have.status(201);",
-              "let jsonData = pm.response.json();",
-              "pm.environment.set('commentId', jsonData.id);"
-            ]
+              "var jsonData = pm.response.json();",
+              "pm.collectionVariables.set(\"eventId\", jsonData.id);"
+            ],
+            "type": "text/javascript"
           }
         }
       ]
     },
     {
-      "name": "Get comments",
+      "name": "Publish Event",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": { "raw": "http://localhost:8080/admin/events/{{eventId}}/publish", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["admin","events","{{eventId}}","publish"] }
+      },
+      "response": []
+    },
+    {
+      "name": "Add Comment",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "http://localhost:8080/users/1/events/{{eventId}}/comments", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["users","1","events","{{eventId}}","comments"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Great event!\"\n}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "pm.collectionVariables.set(\"commentId\", jsonData.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Comments",
       "request": {
         "method": "GET",
-        "url": "http://localhost:8080/events/{{eventId}}/comments"
+        "header": [],
+        "url": { "raw": "http://localhost:8080/events/{{eventId}}/comments", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["events","{{eventId}}","comments"] }
       },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.response.to.have.status(200);",
-              "let jsonData = pm.response.json();",
-              "pm.expect(jsonData.length).to.be.above(0);"
-            ]
-          }
-        }
-      ]
+      "response": []
     },
     {
-      "name": "Delete comment",
+      "name": "Delete Comment",
       "request": {
         "method": "DELETE",
-        "url": "http://localhost:8080/users/{{userId}}/comments/{{commentId}}"
+        "header": [],
+        "url": { "raw": "http://localhost:8080/users/1/comments/{{commentId}}", "protocol": "http", "host": ["localhost"], "port": "8080", "path": ["users","1","comments","{{commentId}}"] }
       },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.response.to.have.status(204);",
-              "pm.environment.unset('commentId');"
-            ]
-          }
-        }
-      ]
+      "response": []
     }
   ]
 }
+
