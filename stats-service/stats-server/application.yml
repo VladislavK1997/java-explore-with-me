@@ -1,7 +1,18 @@
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:test}
+  sql:
+    init:
+      mode: never
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
     password:
   jpa:
@@ -13,12 +24,37 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+        jdbc:
+          batch_size: 20
 
 server:
   port: 9090
 
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/stats_db}
+    username: ${SPRING_DATASOURCE_USERNAME:stats_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:stats_password}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:create}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+server:
+  port: ${SERVER_PORT:9090}
+
 logging:
   level:
     root: WARN
-    ru.practicum: DEBUG
-    org.springframework.web: DEBUG
+    ru.practicum: INFO
+    org.springframework.web: INFO

@@ -1,0 +1,85 @@
+package ru.practicum.ewm.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.dto.NewUserRequest;
+import ru.practicum.ewm.dto.UserDto;
+import ru.practicum.ewm.exception.ConflictException;
+import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.exception.ValidationException;
+import ru.practicum.ewm.mapper.UserMapper;
+import ru.practicum.ewm.model.User;
+import ru.practicum.ewm.repository.UserRepository;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class UserServiceImpl implements UserService {
+    private final UserRepository userRepository;
+
+    @Override
+    @Transactional
+    public UserDto createUser(NewUserRequest newUserRequest) {
+        if (userRepository.existsByEmail(newUserRequest.getEmail())) {
+            throw new ConflictException("User with email " + newUserRequest.getEmail() + " already exists");
+        }
+
+        User user = UserMapper.toUser(newUserRequest);
+        User savedUser = userRepository.save(user);
+        return UserMapper.toUserDto(savedUser);
+    }
+
+    @Override
+    public List<UserDto> getUsers(List<Long> ids, Integer from, Integer size) {
+        if (from == null) {
+            from = 0;
+        }
+        if (size == null) {
+            size = 10;
+        }
+
+        if (from < 0) {
+            throw new ValidationException("Parameter 'from' must be greater than or equal to 0");
+        }
+        if (size <= 0) {
+            throw new ValidationException("Parameter 'size' must be greater than 0");
+        }
+
+        int pageNumber = 0;
+        if (size > 0) {
+            pageNumber = from / size;
+        }
+
+        PageRequest page = PageRequest.of(pageNumber, size);
+
+        List<User> users;
+        if (ids != null && !ids.isEmpty()) {
+            users = userRepository.findByIdIn(ids, page);
+        } else {
+            users = userRepository.findAll(page).getContent();
+        }
+
+        if (users == null || users.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return users.stream()
+                .map(UserMapper::toUserDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void deleteUser(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User with id=" + userId + " was not found");
+        }
+        userRepository.deleteById(userId);
+    }
+}
